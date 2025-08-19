@@ -1,0 +1,117 @@
+{% doc %}
+  @prompt
+    I need to add breadcrumbs for the collection.
+    Here is my code for breadcrumbs on products:
+    {% if section.settings.show_breadcrumbs %}
+    <div class="product_breadcrumbs">
+    <a href="/">Home</a>
+    <p>/</p>
+    {% if product.collections.first.title != blank %}
+    <a href="{{ product.collections.first.url }}">{{ product.collections.first.title }}</a>
+    <p>/</p>
+    {% endif %}
+    <p>{{ product.title }}</p>
+    </div>
+    {% endif %}
+    
+    You don't need to write the collection name itself at the end. It should just be a "/" symbol at the end.
+    And here are the styles for breadcrumbs:
+    .product_breadcrumbs{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    } 
+    
+    .product_breadcrumbs a, .product_breadcrumbs p{ 
+    color: #16161659; 
+    font-size: 14px; 
+    font-weight: 500; 
+    text-transform: uppercase; 
+    margin: 0; 
+    
+    @media screen and (width < 750px) { 
+    font-size: 12px; 
+    } 
+    } 
+    
+    .product_breadcrumbs p{ 
+    cursor: default; 
+    } 
+    
+    .product_breadcrumbs a{ 
+    cursor: pointer; 
+    
+    &:hover { 
+    color: #161616; 
+    } 
+    }, Не потрібно писати в кінці саму назву колекції. В кінці має бути лиш символ "/".
+    , Now there are two "/" characters at the end, but there should only be one
+    
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .collection-breadcrumbs-{{ ai_gen_id }} {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} a,
+  .collection-breadcrumbs-{{ ai_gen_id }} p {
+    color: #16161659;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} p {
+    cursor: default;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} a {
+    cursor: pointer;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} a:hover {
+    color: #161616;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-breadcrumbs-{{ ai_gen_id }} a, 
+    .collection-breadcrumbs-{{ ai_gen_id }} p {
+      font-size: 12px;
+    }
+  }
+{% endstyle %}
+
+{% if block.settings.show_breadcrumbs %}
+<div class="collection-breadcrumbs-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <a href="{{ routes.root_url }}">Home</a>
+  <p>/</p>
+</div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Collection Breadcrumbs",
+  "tag": null,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumbs",
+      "label": "Show breadcrumbs",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection Breadcrumbs"
+    }
+  ]
+}
+{% endschema %}

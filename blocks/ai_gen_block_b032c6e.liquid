@@ -1,0 +1,153 @@
+{% doc %}
+  @prompt
+    I need to add breadcrumbs for the collection.
+    Here is my code for breadcrumbs on products:
+    {% if section.settings.show_breadcrumbs %}
+    <div class="product_breadcrumbs">
+    <a href="/">Home</a>
+    <p>/</p>
+    {% if product.collections.first.title != blank %}
+    <a href="{{ product.collections.first.url }}">{{ product.collections.first.title }}</a>
+    <p>/</p>
+    {% endif %}
+    <p>{{ product.title }}</p>
+    </div>
+    {% endif %}
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .collection-breadcrumbs-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: {{ block.settings.spacing }}px;
+    margin-bottom: {{ block.settings.bottom_margin }}px;
+    font-size: {{ block.settings.font_size }}px;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} a {
+    color: {{ block.settings.link_color }};
+    text-decoration: {{ block.settings.show_underline | default: false | plus: 0 | times: 1 | plus: 0 | replace: '0', 'none' | replace: '1', 'underline' }};
+    transition: opacity 0.2s ease;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} a:hover {
+    opacity: 0.8;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} p {
+    color: {{ block.settings.text_color }};
+    margin: 0;
+  }
+
+  .collection-breadcrumbs-{{ ai_gen_id }} .separator {
+    color: {{ block.settings.separator_color }};
+    margin: 0;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-breadcrumbs-{{ ai_gen_id }} {
+      font-size: {{ block.settings.font_size | minus: 2 }}px;
+      gap: {{ block.settings.spacing | minus: 2 }}px;
+    }
+  }
+{% endstyle %}
+
+<div class="collection-breadcrumbs-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <a href="{{ routes.root_url }}">{{ block.settings.home_text }}</a>
+  <p class="separator">{{ block.settings.separator }}</p>
+  
+  {% if collection.title != blank %}
+    <p>{{ collection.title }}</p>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Collection Breadcrumbs",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "home_text",
+      "label": "Home text",
+      "default": "Home"
+    },
+    {
+      "type": "text",
+      "id": "separator",
+      "label": "Separator",
+      "default": "/"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Font size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "spacing",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Spacing between items",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "bottom_margin",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom margin",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "link_color",
+      "label": "Link color",
+      "default": "#000F9F"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "separator_color",
+      "label": "Separator color",
+      "default": "#000000"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_underline",
+      "label": "Show underline on links",
+      "default": false
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection Breadcrumbs"
+    }
+  ]
+}
+{% endschema %}

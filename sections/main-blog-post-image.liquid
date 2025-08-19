@@ -1,0 +1,542 @@
+<script src="https://cdn.jsdelivr.net/npm/colorthief@2.4.0/dist/color-thief.min.js"></script>
+
+{% stylesheet %}
+.placeholder-image {
+  position: relative;
+  aspect-ratio: var(--ratio);
+  overflow: hidden;
+}
+
+.placeholder-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-block-custom {
+  display: flex;
+  justify-content: center;
+}
+
+.image-block-custom--height-fill-custom .image-block-custom__image-custom {
+  height: 100%;
+}
+
+.image-block-custom__image-custom {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.image-gradient-wrapper-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gradient-background, transparent);
+  padding: var(--gradient-padding, 20px);
+  border-radius: var(--frame-border-radius);
+  box-sizing: border-box;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.image-gradient-wrapper-custom-right{
+  flex-direction: row;
+  @media (width < 769px) {
+    flex-direction: column;
+  }
+}
+
+.image-gradient-wrapper-custom-left{
+  flex-direction: row-reverse;
+  @media (width < 769px) {
+    flex-direction: column;
+  }
+}
+
+.image-white-frame-custom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: var(--white-border);
+  border-radius: inherit;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 790px;
+  max-height: 460px;
+  background-color: #fff;
+  overflow: hidden;
+
+  @media (width < 769px) {
+    max-width: 620px;
+    margin-bottom: 20px;
+  }
+}
+
+.gradient-wrapper-custom-text-block{
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blog-post-card__content-custom{
+  width: 100%;
+  max-width: 380px;
+}
+
+@media (max-width: 768px) {
+  .image-gradient-wrapper-custom {
+    padding: var(--gradient-padding-mobile, 10px);
+  }
+  .image-white-frame-custom {
+    border: var(--white-border-mobile);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+{% endstylesheet %}
+
+{% liquid
+  assign ratio = '16 / 9'
+%}
+
+{% capture class %}
+  image-block-custom image-block-custom-custom image-block-custom--{{ section.id }} image-block-custom--height-{{ section.settings.height }} spacing-style size-style
+{% endcapture %}
+
+{% capture style %}
+  --ratio: {{ ratio }};
+  {% render 'size-style', settings: section.settings %}
+  {% render 'spacing-style', settings: section.settings %}
+
+  {% if section.settings.custom_gradient_css != blank %}
+    --gradient-background: {{ section.settings.custom_gradient_css }};
+  {% endif %}
+
+  --gradient-padding: {{ section.settings.gradient_padding }}px;
+  --gradient-padding-mobile: {{ section.settings.gradient_padding_mobile }}px;
+
+  --white-border: {{ section.settings.white_border_width }}px solid #FFF;
+  --white-border-mobile: {{ section.settings.white_border_width_mobile }}px solid #FFF;
+  --frame-border-radius: {{ section.settings.border_radius }}px;
+{% endcapture %}
+
+{% liquid
+  assign media_width_desktop = '100vw'
+  assign media_width_mobile = '100vw'
+
+  assign base_width_desktop = 1440
+  assign base_width_mobile = 375
+
+  if section.settings.width == 'custom'
+    assign media_width_desktop = section.settings.custom_width | append: 'vw'
+  elsif section.settings.width == 'fit-content'
+    assign media_width_desktop = '(min-width: 750px) 860px, 100vw'
+    assign sizes = media_width_desktop
+  else
+    assign sizes = '100vw'
+  endif
+  assign widths = '300, 450, 600, 750, 900, 1050, 1200, 1350, 1500, 1650, 1800, 1950, 2000, 2500, 3000, 3500, 4000, 5000'
+%}
+
+{% capture image_content %}
+  {%- if section.settings.image -%}
+    <div style="width: 100%;">
+      {{
+        section.settings.image
+        | image_url: width: 3840
+        | image_tag:
+          width: section.settings.image.width,
+          widths: widths,
+          height: section.settings.image.height,
+          class: 'image-block__image',
+          sizes: sizes
+      }}
+    </div>
+  {%- else -%}
+    {%- if section.settings.blog.image != blank -%}
+      <a href="{{ section.settings.blog.url }}" style="width: 100%;">
+        {{
+          section.settings.blog.image 
+          | image_url: width: 3840
+          | image_tag:
+            width: section.settings.blog.image.width,
+            widths: widths,
+            height: section.settings.blog.image.height,
+            class: 'image-block__image',
+            sizes: sizes
+        }}
+      </a>
+    {%- else -%}
+      <div class="placeholder-image" style="width: 100%;">
+        <placeholder-image
+          data-block-id="{{ section.id }}"
+          data-type="general"
+        ></placeholder-image>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+{% endcapture %}
+{% capture title %}
+  {% content_for 'block', id: 'heading', type: '_heading', text: section.settings.blog.title %}
+{% endcapture %}
+{% capture details %}
+  {% content_for 'block',
+    id: 'blog-post-details',
+    type: '_blog-post-info-text',
+    alignment: block.settings.alignment,
+    article: section.settings.blog
+  %}
+{% endcapture %}
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div class="section color-{{ section.settings.color_scheme }}">
+  <div
+    class="
+      spacing-style
+      layout-panel-flex
+      layout-panel-flex--column
+      section-content-wrapper
+      mobile-column
+    "
+    style="
+      {% render 'layout-panel-style', settings: section.settings %}
+      {% render 'spacing-style', settings: section.settings %}
+    "
+  >
+    <div
+      class="{{ class }}"
+      style="{{ style }}"
+      {{ section.shopify_attributes }}
+      data-block-id="{{ section.id }}"
+      data-custom-gradient-css="{{ section.settings.custom_gradient_css | escape }}"
+    >
+      <div class="image-gradient-wrapper-custom {% if section.settings.row-select == 'right' %}image-gradient-wrapper-custom-right{% else %}image-gradient-wrapper-custom-left{% endif %}">
+        <div class="gradient-wrapper-custom-text-block" style="--text-align: {{ section.settings.alignment }}; text-align: var(--text-align)">
+          <div class="blog-post-card__content blog-post-card__content-custom">
+            <a href="{{ section.settings.blog.url }}">{{ title }}</a>
+        
+            {{ details }}
+        
+            <div class="blog-post-card__content-text">
+              {% assign content = section.settings.blog.excerpt | default: section.settings.blog.content %}
+        
+              {% if content %}
+                {% assign truncatewords = 26 %}
+                {% unless section.settings.blog.image %}
+                  {% assign truncatewords = 90 %}
+                {% endunless %}
+        
+                <rte-formatter>
+                  {{ content | strip_html | truncatewords: truncatewords }}
+                </rte-formatter>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="image-white-frame-custom">
+          {{ image_content }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% javascript %}
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.image-block-custom-custom').forEach(block => {
+      const customGradientCss = block.dataset.customGradientCss.trim().toLowerCase();
+      const gradientWrapper = block.querySelector('.image-gradient-wrapper-custom');
+
+      console.log('Block ID:', block.dataset.blockId);
+      console.log('Custom Gradient CSS (normalized):', customGradientCss);
+
+      if (customGradientCss === '' || customGradientCss === 'var(--auto-gradient, transparent)') {
+        const imageElement = block.querySelector('.image-block__image');
+        console.log('imageElement', imageElement)
+        
+        if (imageElement) {
+          const imageUrl = imageElement.src;
+          console.log('Image Element found. Image URL:', imageUrl);
+
+          if (imageUrl) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; 
+            img.onload = () => {
+              console.log('Image loaded for ColorThief:', imageUrl);
+              try {
+                if (typeof ColorThief !== 'undefined') {
+                  const colorThief = new ColorThief();
+                  const palette = colorThief.getPalette(img, 2); 
+                  console.log('ColorThief Palette:', palette);
+
+                  if (palette && palette.length >= 2) {
+                    const color1 = `rgb(${palette[0][0]}, ${palette[0][1]}, ${palette[0][2]})`;
+                    const color2 = `rgb(${palette[1][0]}, ${palette[1][1]}, ${palette[1][2]})`;
+                    const generatedGradient = `linear-gradient(45deg, ${color1}, ${color2})`;
+                    
+                    gradientWrapper.style.setProperty('--gradient-background', generatedGradient);
+                    console.log('Applied auto-generated gradient:', generatedGradient);
+                  } else {
+                    console.warn('ColorThief could not get enough colors. Setting transparent.');
+                    gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+                  }
+                } else {
+                  console.error('ColorThief library not found. Auto-gradient disabled.');
+                  gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+                }
+              } catch (e) {
+                console.error('Error during color extraction with ColorThief:', e);
+                gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+              }
+            };
+            img.onerror = () => {
+              console.error('Image failed to load for ColorThief (onerror event):', imageUrl);
+              gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+            };
+            
+            setTimeout(() => {
+              img.src = imageUrl;
+            }, 200); 
+
+          } else {
+            console.warn('Image URL is empty. Cannot generate auto-gradient.');
+            gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+          }
+        } else {
+          console.warn('Image element not found. Cannot generate auto-gradient.');
+          gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+        }
+      } else {
+        console.log('Custom gradient CSS is set (or is "transparent"). Auto-gradient skipped.');
+      }
+    });
+  });
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Image gradient with text",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "article",
+      "id": "blog",
+      "label": "Blog post"
+    },
+    {
+      "type": "select",
+      "id": "row-select",
+      "label": "Image position",
+      "options": [
+        {
+          "label": "Left",
+          "value": "left"
+        },
+        {
+          "label": "Right",
+          "value": "right"
+        }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "t:settings.alignment",
+      "default": "left"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "header",
+      "content": "Size"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "Desktop width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "Fit content"
+        },
+        {
+          "value": "fill",
+          "label": "Fill"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "Custom width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "width_mobile",
+      "label": "Mobile width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "Fit content"
+        },
+        {
+          "value": "fill",
+          "label": "Fill"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "range",
+      "id": "custom_width_mobile",
+      "label": "Custom width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width_mobile == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "height",
+      "label": "Height",
+      "options": [
+        {
+          "value": "fit",
+          "label": "Fit content"
+        },
+        {
+          "value": "fill",
+          "label": "Fill"
+        }
+      ],
+      "default": "fit",
+      "visible_if": "{{ block.settings.image_ratio == 'adapt' }}"
+    },
+    {
+      "type": "header",
+      "content": "Gradient Background"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_gradient_css",
+      "label": "Custom Gradient CSS (e.g., linear-gradient(to right, red, yellow))",
+      "info": "Leave empty to attempt auto-generating a gradient from the image. Set to 'transparent' for a clear background."
+    },
+    {
+      "type": "range",
+      "id": "gradient_padding",
+      "label": "Gradient padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "gradient_padding_mobile",
+      "label": "Gradient padding (mobile)",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "White Frame"
+    },
+    {
+      "type": "range",
+      "id": "white_border_width",
+      "label": "Frame thickness (Desktop)",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "white_border_width_mobile",
+      "label": "Frame thickness (Mobile)",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 3 
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image gradient with text",
+      "category": "Basic"
+    }
+  ]
+}
+{% endschema %}

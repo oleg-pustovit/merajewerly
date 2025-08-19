@@ -1,0 +1,425 @@
+<script src="https://cdn.jsdelivr.net/npm/colorthief@2.4.0/dist/color-thief.min.js"></script>
+
+{% stylesheet %}
+.placeholder-image {
+  position: relative;
+  aspect-ratio: var(--ratio);
+  overflow: hidden;
+}
+
+.placeholder-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-block {
+  display: flex;
+  justify-content: center;
+}
+
+.image-block--height-fill .image-block__image {
+  height: 100%;
+}
+
+.image-block__image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.image-gradient-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--gradient-background, transparent);
+  padding: var(--gradient-padding, 20px);
+  border-radius: var(--frame-border-radius);
+  box-sizing: border-box;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.image-white-frame {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: var(--white-border);
+  border-radius: inherit;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 854px;
+  max-height: 460px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .image-gradient-wrapper {
+    padding: var(--gradient-padding-mobile, 10px);
+  }
+  .image-white-frame {
+    border: var(--white-border-mobile);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+{% endstylesheet %}
+
+{% liquid
+  assign ratio = '16 / 9'
+%}
+
+{% capture class %}
+  image-block image-block--{{ block.id }} image-block--height-{{ block.settings.height }} spacing-style size-style
+{% endcapture %}
+
+{% capture style %}
+  --ratio: {{ ratio }};
+  {% render 'size-style', settings: block.settings %}
+  {% render 'spacing-style', settings: block.settings %}
+
+  {% if block.settings.custom_gradient_css != blank %}
+    --gradient-background: {{ block.settings.custom_gradient_css }};
+  {% endif %}
+
+  --gradient-padding: {{ block.settings.gradient_padding }}px;
+  --gradient-padding-mobile: {{ block.settings.gradient_padding_mobile }}px;
+
+  --white-border: {{ block.settings.white_border_width }}px solid #FFF;
+  --white-border-mobile: {{ block.settings.white_border_width_mobile }}px solid #FFF;
+  --frame-border-radius: {{ block.settings.border_radius }}px;
+{% endcapture %}
+
+{% liquid
+  assign media_width_desktop = '100vw'
+  assign media_width_mobile = '100vw'
+
+  assign base_width_desktop = 1440
+  assign base_width_mobile = 375
+
+  if block.settings.width == 'custom'
+    assign media_width_desktop = block.settings.custom_width | append: 'vw'
+  elsif block.settings.width == 'fit-content'
+    assign media_width_desktop = '(min-width: 750px) 860px, 100vw'
+    assign sizes = media_width_desktop
+  else
+    assign sizes = '100vw'
+  endif
+  assign widths = '300, 450, 600, 750, 900, 1050, 1200, 1350, 1500, 1650, 1800, 1950, 2000, 2500, 3000, 3500, 4000, 5000'
+%}
+
+{% capture image_content %}
+  {%- if block.settings.image -%}
+    <div style="width: 100%;">
+      {{
+        block.settings.image
+        | image_url: width: 3840
+        | image_tag:
+          width: block.settings.image.width,
+          widths: widths,
+          height: block.settings.image.height,
+          class: 'image-block__image',
+          sizes: sizes
+      }}
+    </div>
+  {%- else -%}
+    {%- if article.image != blank -%}
+      <div style="width: 100%;">
+        {{
+          article.image
+          | image_url: width: 3840
+          | image_tag:
+            width: article.image.width,
+            widths: widths,
+            height: article.image.height,
+            class: 'image-block__image',
+            sizes: sizes
+        }}
+      </div>
+    {%- else -%}
+      <div class="placeholder-image" style="width: 100%;">
+        <placeholder-image
+          data-block-id="{{ block.id }}"
+          data-type="general"
+        ></placeholder-image>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+{% endcapture %}
+
+{% if block.settings.link == blank %}
+  <div
+    class="{{ class }}"
+    style="{{ style }}"
+    {{ block.shopify_attributes }}
+    data-block-id="{{ block.id }}"
+    data-custom-gradient-css="{{ block.settings.custom_gradient_css | escape }}"
+  >
+    <div class="image-gradient-wrapper">
+      <div class="image-white-frame" style="{% if block.settings.white_border_width > 0 %}background-color: #fff;{% endif %}">
+        {{ image_content }}
+      </div>
+    </div>
+  </div>
+{% else %}
+  <a
+    href="{{ block.settings.link }}"
+    class="{{ class }}"
+    style="{{ style }}"
+    {{ block.shopify_attributes }}
+    data-block-id="{{ block.id }}"
+    data-custom-gradient-css="{{ block.settings.custom_gradient_css | escape }}"
+  >
+    <div class="image-gradient-wrapper">
+      <div class="image-white-frame">
+        {{ image_content }}
+      </div>
+    </div>
+  </a>
+{% endif %}
+
+{% javascript %}
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.image-block').forEach(block => {
+      const customGradientCss = block.dataset.customGradientCss.trim().toLowerCase();
+      const gradientWrapper = block.querySelector('.image-gradient-wrapper');
+
+      console.log('Block ID:', block.dataset.blockId);
+      console.log('Custom Gradient CSS (normalized):', customGradientCss);
+
+      if (customGradientCss === '' || customGradientCss === 'var(--auto-gradient, transparent)') {
+        const imageElement = block.querySelector('.image-block__image');
+        
+        if (imageElement) {
+          const imageUrl = imageElement.src;
+          console.log('Image Element found. Image URL:', imageUrl);
+
+          if (imageUrl) {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous'; 
+            img.onload = () => {
+              console.log('Image loaded for ColorThief:', imageUrl);
+              try {
+                if (typeof ColorThief !== 'undefined') {
+                  const colorThief = new ColorThief();
+                  const palette = colorThief.getPalette(img, 2); 
+                  console.log('ColorThief Palette:', palette);
+
+                  if (palette && palette.length >= 2) {
+                    const color1 = `rgb(${palette[0][0]}, ${palette[0][1]}, ${palette[0][2]})`;
+                    const color2 = `rgb(${palette[1][0]}, ${palette[1][1]}, ${palette[1][2]})`;
+                    const generatedGradient = `linear-gradient(45deg, ${color1}, ${color2})`;
+                    
+                    gradientWrapper.style.setProperty('--gradient-background', generatedGradient);
+                    console.log('Applied auto-generated gradient:', generatedGradient);
+                  } else {
+                    console.warn('ColorThief could not get enough colors. Setting transparent.');
+                    gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+                  }
+                } else {
+                  console.error('ColorThief library not found. Auto-gradient disabled.');
+                  gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+                }
+              } catch (e) {
+                console.error('Error during color extraction with ColorThief:', e);
+                gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+              }
+            };
+            img.onerror = () => {
+              console.error('Image failed to load for ColorThief (onerror event):', imageUrl);
+              gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+            };
+            
+            setTimeout(() => {
+              img.src = imageUrl;
+            }, 200); 
+
+          } else {
+            console.warn('Image URL is empty. Cannot generate auto-gradient.');
+            gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+          }
+        } else {
+          console.warn('Image element not found. Cannot generate auto-gradient.');
+          gradientWrapper.style.setProperty('--gradient-background', 'transparent');
+        }
+      } else {
+        console.log('Custom gradient CSS is set (or is "transparent"). Auto-gradient skipped.');
+      }
+    });
+  });
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Image",
+  "tag": null,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Size"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "Desktop width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "Fit content"
+        },
+        {
+          "value": "fill",
+          "label": "Fill"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "Custom width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "width_mobile",
+      "label": "Mobile width",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "Fit content"
+        },
+        {
+          "value": "fill",
+          "label": "Fill"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "fill"
+    },
+    {
+      "type": "range",
+      "id": "custom_width_mobile",
+      "label": "Custom width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width_mobile == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "height",
+      "label": "Height",
+      "options": [
+        {
+          "value": "fit",
+          "label": "Fit content"
+        },
+        {
+          "value": "fill",
+          "label": "Fill"
+        }
+      ],
+      "default": "fit",
+      "visible_if": "{{ block.settings.image_ratio == 'adapt' }}"
+    },
+    {
+      "type": "header",
+      "content": "Gradient Background"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_gradient_css",
+      "label": "Custom Gradient CSS (e.g., linear-gradient(to right, red, yellow))",
+      "info": "Leave empty to attempt auto-generating a gradient from the image. Set to 'transparent' for a clear background."
+    },
+    {
+      "type": "range",
+      "id": "gradient_padding",
+      "label": "Gradient padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "gradient_padding_mobile",
+      "label": "Gradient padding (mobile)",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "White Frame"
+    },
+    {
+      "type": "range",
+      "id": "white_border_width",
+      "label": "Frame thickness (Desktop)",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "white_border_width_mobile",
+      "label": "Frame thickness (Mobile)",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 3 
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image",
+      "category": "Basic"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,663 @@
+{% doc %}
+  @prompt
+    I need to design a pop-up with all the filters for a collection
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-filters-popup-{{ ai_gen_id }} {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: {{ block.settings.overlay_color }};
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .ai-filters-popup-{{ ai_gen_id }}.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .ai-filters-popup__container-{{ ai_gen_id }} {
+    width: 100%;
+    max-width: {{ block.settings.popup_width }}px;
+    height: 100%;
+    background-color: {{ block.settings.background_color }};
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ai-filters-popup-{{ ai_gen_id }}.active .ai-filters-popup__container-{{ ai_gen_id }} {
+    transform: translateX(0);
+  }
+
+  .ai-filters-popup__header-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid {{ block.settings.border_color }};
+  }
+
+  .ai-filters-popup__title-{{ ai_gen_id }} {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-filters-popup__close-{{ ai_gen_id }} {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-filters-popup__close-{{ ai_gen_id }} svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ai-filters-popup__content-{{ ai_gen_id }} {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .ai-filters-popup__footer-{{ ai_gen_id }} {
+    padding: 20px;
+    border-top: 1px solid {{ block.settings.border_color }};
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .ai-filters-popup__button-{{ ai_gen_id }} {
+    padding: 12px 20px;
+    border: none;
+    border-radius: {{ block.settings.button_radius }}px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .ai-filters-popup__apply-{{ ai_gen_id }} {
+    background-color: {{ block.settings.apply_button_color }};
+    color: {{ block.settings.apply_button_text_color }};
+  }
+
+  .ai-filters-popup__apply-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.apply_button_hover_color }};
+  }
+
+  .ai-filters-popup__clear-{{ ai_gen_id }} {
+    background-color: {{ block.settings.clear_button_color }};
+    color: {{ block.settings.clear_button_text_color }};
+  }
+
+  .ai-filters-popup__clear-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.clear_button_hover_color }};
+  }
+
+  .ai-filters-popup__trigger-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background-color: {{ block.settings.trigger_background_color }};
+    color: {{ block.settings.trigger_text_color }};
+    border: 1px solid {{ block.settings.trigger_border_color }};
+    border-radius: {{ block.settings.trigger_radius }}px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .ai-filters-popup__trigger-{{ ai_gen_id }} svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ai-filters-popup__filter-group-{{ ai_gen_id }} {
+    margin-bottom: 24px;
+  }
+
+  .ai-filters-popup__filter-title-{{ ai_gen_id }} {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-filters-popup__filter-options-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ai-filters-popup__filter-option-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ai-filters-popup__filter-checkbox-{{ ai_gen_id }} {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid {{ block.settings.border_color }};
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .ai-filters-popup__filter-checkbox-{{ ai_gen_id }}:checked {
+    background-color: {{ block.settings.accent_color }};
+    border-color: {{ block.settings.accent_color }};
+  }
+
+  .ai-filters-popup__filter-checkbox-{{ ai_gen_id }}:checked::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .ai-filters-popup__filter-label-{{ ai_gen_id }} {
+    font-size: 14px;
+    color: {{ block.settings.text_color }};
+    cursor: pointer;
+  }
+
+  .ai-filters-popup__price-range-{{ ai_gen_id }} {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+  .ai-filters-popup__price-input-{{ ai_gen_id }} {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid {{ block.settings.border_color }};
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .ai-filters-popup__price-separator-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-filters-popup__color-options-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .ai-filters-popup__color-option-{{ ai_gen_id }} {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid {{ block.settings.border_color }};
+  }
+
+  .ai-filters-popup__color-option-{{ ai_gen_id }}.selected::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 2px solid {{ block.settings.accent_color }};
+    border-radius: 50%;
+  }
+
+  .ai-filters-popup__size-options-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .ai-filters-popup__size-option-{{ ai_gen_id }} {
+    padding: 8px 12px;
+    border: 1px solid {{ block.settings.border_color }};
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;background-color: transparent;
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-filters-popup__size-option-{{ ai_gen_id }}.selected {
+    background-color: {{ block.settings.accent_color }};
+    color: white;
+    border-color: {{ block.settings.accent_color }};
+  }
+
+  @media screen and (min-width: 750px) {
+    .ai-filters-popup__trigger-{{ ai_gen_id }} {
+      display: none;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-filters-popup__container-{{ ai_gen_id }} {
+      max-width: 100%;
+    }
+  }
+{% endstyle %}
+
+<filters-popup-{{ ai_gen_id }} {{ block.shopify_attributes }}>
+  <button class="ai-filters-popup__trigger-{{ ai_gen_id }}" aria-label="{{ block.settings.trigger_text }}" aria-expanded="false">
+    {{ block.settings.trigger_text }}
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+    </svg>
+  </button>
+
+  <div class="ai-filters-popup-{{ ai_gen_id }}">
+    <div class="ai-filters-popup__container-{{ ai_gen_id }}">
+      <div class="ai-filters-popup__header-{{ ai_gen_id }}">
+        <h2 class="ai-filters-popup__title-{{ ai_gen_id }}">{{ block.settings.popup_title }}</h2>
+        <button class="ai-filters-popup__close-{{ ai_gen_id }}" aria-label="Close filters">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="ai-filters-popup__content-{{ ai_gen_id }}">
+        {% if collection.filters.size > 0 %}
+          <form id="ai-filter-form-{{ ai_gen_id }}">
+            {% for filter in collection.filters %}
+              <div class="ai-filters-popup__filter-group-{{ ai_gen_id }}">
+                <h3 class="ai-filters-popup__filter-title-{{ ai_gen_id }}">{{ filter.label }}</h3>
+                
+                {% case filter.type %}
+                  {% when 'price_range' %}
+                    <div class="ai-filters-popup__price-range-{{ ai_gen_id }}">
+                      <input 
+                        class="ai-filters-popup__price-input-{{ ai_gen_id }}" 
+                        type="number" 
+                        name="{{ filter.min_value.param_name }}" 
+                        id="ai-filter-price-min-{{ ai_gen_id }}" 
+                        placeholder="{{ block.settings.min_price_placeholder }}"
+                        {% if filter.min_value.value %}
+                          value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"
+                        {% endif %}
+                      >
+                      <span class="ai-filters-popup__price-separator-{{ ai_gen_id }}">-</span>
+                      <input 
+                        class="ai-filters-popup__price-input-{{ ai_gen_id }}" 
+                        type="number" 
+                        name="{{ filter.max_value.param_name }}" 
+                        id="ai-filter-price-max-{{ ai_gen_id }}" 
+                        placeholder="{{ block.settings.max_price_placeholder }}"
+                        {% if filter.max_value.value %}
+                          value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"
+                        {% endif %}
+                      >
+                    </div>
+                  {% when 'list' %}
+                    <div class="ai-filters-popup__filter-options-{{ ai_gen_id }}">
+                      {% for value in filter.values %}
+                        <div class="ai-filters-popup__filter-option-{{ ai_gen_id }}">
+                          <input 
+                            type="checkbox" 
+                            name="{{ value.param_name }}" 
+                            value="{{ value.value }}" 
+                            id="ai-filter-{{ value.param_name }}-{{ ai_gen_id }}"
+                            class="ai-filters-popup__filter-checkbox-{{ ai_gen_id }}"
+                            {% if value.active %}checked{% endif %}
+                          >
+                          <label for="ai-filter-{{ value.param_name }}-{{ ai_gen_id }}" class="ai-filters-popup__filter-label-{{ ai_gen_id }}">
+                            {{ value.label }} ({{ value.count }})
+                          </label>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% when 'boolean' %}
+                    <div class="ai-filters-popup__filter-options-{{ ai_gen_id }}">
+                      {% for value in filter.values %}
+                        <div class="ai-filters-popup__filter-option-{{ ai_gen_id }}">
+                          <input 
+                            type="checkbox" 
+                            name="{{ value.param_name }}" 
+                            value="{{ value.value }}" 
+                            id="ai-filter-{{ value.param_name }}-{{ ai_gen_id }}"
+                            class="ai-filters-popup__filter-checkbox-{{ ai_gen_id }}"
+                            {% if value.active %}checked{% endif %}
+                          >
+                          <label for="ai-filter-{{ value.param_name }}-{{ ai_gen_id }}" class="ai-filters-popup__filter-label-{{ ai_gen_id }}">
+                            {{ value.label }} ({{ value.count }})
+                          </label>
+                        </div>
+                      {% endfor %}
+                    </div>
+                {% endcase %}
+              </div>
+            {% endfor %}
+          </form>
+        {% else %}
+          <p>{{ block.settings.no_filters_text }}</p>
+        {% endif %}
+      </div>
+
+      <div class="ai-filters-popup__footer-{{ ai_gen_id }}">
+        <button class="ai-filters-popup__button-{{ ai_gen_id }} ai-filters-popup__clear-{{ ai_gen_id }}">
+          {{ block.settings.clear_button_text }}
+        </button>
+        <button class="ai-filters-popup__button-{{ ai_gen_id }} ai-filters-popup__apply-{{ ai_gen_id }}">
+          {{ block.settings.apply_button_text }}
+        </button>
+      </div>
+    </div>
+  </div>
+</filters-popup-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class FiltersPopup extends HTMLElement {
+      constructor() {
+        super();
+        this.popup = this.querySelector('.ai-filters-popup-{{ ai_gen_id }}');
+        this.trigger = this.querySelector('.ai-filters-popup__trigger-{{ ai_gen_id }}');
+        this.closeButton = this.querySelector('.ai-filters-popup__close-{{ ai_gen_id }}');
+        this.applyButton = this.querySelector('.ai-filters-popup__apply-{{ ai_gen_id }}');
+        this.clearButton = this.querySelector('.ai-filters-popup__clear-{{ ai_gen_id }}');
+        this.form = this.querySelector('#ai-filter-form-{{ ai_gen_id }}');
+        
+        this.currentUrl = new URL(window.location.href);
+        this.searchParams = new URLSearchParams(this.currentUrl.search);
+      }
+
+      connectedCallback() {
+        this.trigger.addEventListener('click', this.openPopup.bind(this));
+        this.closeButton.addEventListener('click', this.closePopup.bind(this));
+        this.applyButton.addEventListener('click', this.applyFilters.bind(this));
+        this.clearButton.addEventListener('click', this.clearFilters.bind(this));
+        
+        // Close when clicking outside the popup container
+        this.popup.addEventListener('click', (event) => {
+          if (event.target === this.popup) {
+            this.closePopup();
+          }
+        });
+
+        // Handle escape key
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && this.popup.classList.contains('active')) {
+            this.closePopup();
+          }
+        });
+      }
+
+      openPopup() {
+        this.popup.classList.add('active');
+        this.trigger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+
+      closePopup() {
+        this.popup.classList.remove('active');
+        this.trigger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+
+      applyFilters() {
+        if (!this.form) return;
+        
+        const formData = new FormData(this.form);
+        const searchParams = new URLSearchParams(this.currentUrl.search);
+        
+        // Clear existing filter params but keep other params like sort_by
+        for (const [key, value] of searchParams.entries()) {
+          if (key.includes('filter.') || key === 'price_min' || key === 'price_max') {
+            searchParams.delete(key);
+          }
+        }
+        
+        // Add new filter params
+        for (const [key, value] of formData.entries()) {
+          if (value) {
+            searchParams.append(key, value);
+          }
+        }
+        
+        // Create new URL and navigate
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+        window.location.href = newUrl;
+      }
+
+      clearFilters() {
+        if (!this.form) return;
+        
+        // Reset form
+        this.form.reset();
+        
+        // Clear filter params from URL
+        const searchParams = new URLSearchParams(this.currentUrl.search);
+        for (const [key, value] of searchParams.entries()) {
+          if (key.includes('filter.') || key === 'price_min' || key === 'price_max') {
+            searchParams.delete(key);
+          }
+        }
+        
+        // Create new URL and navigate
+        const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+        window.location.href = newUrl;
+      }
+    }
+
+    customElements.define('filters-popup-{{ ai_gen_id }}', FiltersPopup);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Filters Popup",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Trigger Button"
+    },
+    {
+      "type": "text",
+      "id": "trigger_text",
+      "label": "Button text",
+      "default": "Filter"
+    },
+    {
+      "type": "color",
+      "id": "trigger_background_color",
+      "label": "Button background",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "color",
+      "id": "trigger_text_color",
+      "label": "Button text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "trigger_border_color",
+      "label": "Button border color",
+      "default": "#e6e6e6"
+    },
+    {
+      "type": "range",
+      "id": "trigger_radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Button radius",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Popup Settings"
+    },
+    {
+      "type": "text",
+      "id": "popup_title",
+      "label": "Popup title",
+      "default": "Filter Products"
+    },
+    {
+      "type": "range",
+      "id": "popup_width",
+      "min": 300,
+      "max": 600,
+      "step": 10,
+      "unit": "px",
+      "label": "Popup width",
+      "default": 400
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Overlay color",
+      "default": "rgba(0,0,0,0.5)"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "default": "#e6e6e6"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#000f9f"
+    },
+    {
+      "type": "header",
+      "content": "Price Range"
+    },
+    {
+      "type": "text",
+      "id": "min_price_placeholder",
+      "label": "Min price placeholder",
+      "default": "Min"
+    },
+    {
+      "type": "text",
+      "id": "max_price_placeholder",
+      "label": "Max price placeholder",
+      "default": "Max"
+    },
+    {
+      "type": "header",
+      "content": "Buttons"
+    },
+    {
+      "type": "text",
+      "id": "apply_button_text",
+      "label": "Apply button text",
+      "default": "Apply Filters"
+    },
+    {
+      "type": "color",
+      "id": "apply_button_color",
+      "label": "Apply button color",
+      "default": "#000f9f"
+    },
+    {
+      "type": "color",
+      "id": "apply_button_text_color",
+      "label": "Apply button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "apply_button_hover_color",
+      "label": "Apply button hover color",
+      "default": "#000000"
+    },
+    {
+      "type": "text",
+      "id": "clear_button_text",
+      "label": "Clear button text",
+      "default": "Clear All"
+    },
+    {
+      "type": "color",
+      "id": "clear_button_color",
+      "label": "Clear button color",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "color",
+      "id": "clear_button_text_color",
+      "label": "Clear button text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "clear_button_hover_color",
+      "label": "Clear button hover color",
+      "default": "#e6e6e6"
+    },
+    {
+      "type": "range",
+      "id": "button_radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Button radius",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Messages"
+    },
+    {
+      "type": "text",
+      "id": "no_filters_text",
+      "label": "No filters message",
+      "default": "No filters available for this collection."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Filters Popup"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,219 @@
+{% doc %}
+  @prompt
+    Make a block where I can add icons for the product (these can be blocks). The icons themselves should be simple blocks without absolute positioning. I should also be able to change the size of the text in the icons, the text itself, its font weight, the color of the text. You should also add an icon to each badge:
+    1. If the text badges == 'BEST SELLER', then the icon should be:
+    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewbox="0 0 10 11" fill="none">
+    <rect x="0.5" y="1" width="9" height="9" rx="4.5" fill="CurrentColor"></rect>
+    <rect x="0.5" y="1" width="9" height="9" rx="4.5" stroke="#161616"></rect>
+    <circle cx="5" cy="5.5" r="3" fill="white"></circle>
+    </svg>
+    2. If the text badges == 'NEW', then the icon should be:
+    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+    <path d="M4.80416 0.650081C4.85804 0.449973 5.14196 0.449973 5.19584 0.650081L6.15276 4.20414C6.17155 4.27393 6.22607 4.32845 6.29586 4.34724L9.84992 5.30416C10.05 5.35804 10.05 5.64196 9.84992 5.69584L6.29586 6.65276C6.22607 6.67155 6.17155 6.72607 6.15276 6.79586L5.19584 10.3499C5.14196 10.55 4.85804 10.55 4.80416 10.3499L3.84724 6.79586C3.82845 6.72607 3.77393 6.67155 3.70414 6.65276L0.150081 5.69584C-0.0500271 5.64196 -0.050027 5.35804 0.150081 5.30416L3.70414 4.34724C3.77393 4.32845 3.82845 4.27393 3.84724 4.20414L4.80416 0.650081Z" fill="#161616"/>
+    </svg>
+    3. If the text badges == 'OUT OF STOCK', then the badge should be:
+    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+    <path d="M1 9.5L9 1.5M9 9.5L1 1.5" stroke="#161616" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    4. If the text badges is something else, then the badge should be:
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
+    <path d="M1 6.5L6 1.5L11 6.5L6 11.5L1 6.5Z" stroke="#161616" stroke-width="2" stroke-linejoin="round"/>
+    </svg>, The icon should come first, then the text. We will also make sure that the icon texts come from the product metafield (Single-line text (List)). For example, we will have a list of metafields with texts. For example: Icons 1, Icons 2, Icons 3 (but note that this will not be one line with text, but an array). We will add a check, if there are no icons in our block, then it will be hidden.
+    
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+{% assign product_badges = product.metafields.custom.badges.value %}
+
+{% if product_badges.size > 0 or product.available == false %}
+  {% style %}
+    .ai-product-badges-{{ ai_gen_id }} {
+      display: flex;
+      flex-wrap: wrap;
+      gap: {{ block.settings.badge_gap }}px;}
+
+    .ai-product-badge-{{ ai_gen_id }} {
+      display: flex;
+      align-items: center;
+      padding: {{ block.settings.badge_padding }}px;
+      background-color: {{ block.settings.badge_background_color }};
+      border-radius: {{ block.settings.badge_border_radius }}px;
+      gap: 6px;
+    }
+
+    .ai-product-badge-icon-{{ ai_gen_id }} {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ai-product-badge-text-{{ ai_gen_id }} {
+      font-size: {{ block.settings.badge_text_size }}px;
+      font-weight: {{ block.settings.badge_font_weight }};
+      color: {{ block.settings.badge_text_color }};
+      text-transform: {{ block.settings.badge_text_transform }};
+    }
+  {% endstyle %}
+  <div class="ai-product-badges-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+    {% if product.available == false %}
+      <div class="ai-product-badge-{{ ai_gen_id }}">
+        <div class="ai-product-badge-icon-{{ ai_gen_id }}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+            <path d="M1 9.5L9 1.5M9 9.5L1 1.5" stroke="#161616" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="ai-product-badge-text-{{ ai_gen_id }}">OUT OF STOCK</div>
+      </div>
+    {% endif %}
+    {% for badge in product_badges %}
+      {% if badge != blank %}
+        <div class="ai-product-badge-{{ ai_gen_id }}">
+          <div class="ai-product-badge-icon-{{ ai_gen_id }}">
+            {% if badge =='BEST SELLER' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+                <rect x="0.5" y="1" width="9" height="9" rx="4.5" fill="currentColor"></rect>
+                <rect x="0.5" y="1" width="9" height="9" rx="4.5" stroke="#161616"></rect>
+                <circle cx="5" cy="5.5" r="3" fill="white"></circle>
+              </svg>
+            {% elsif badge == 'NEW' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+                <path d="M4.80416 0.650081C4.85804 0.449973 5.14196 0.449973 5.19584 0.650081L6.15276 4.20414C6.17155 4.27393 6.22607 4.32845 6.29586 4.34724L9.84992 5.30416C10.05 5.35804 10.05 5.64196 9.84992 5.69584L6.29586 6.65276C6.22607 6.67155 6.17155 6.72607 6.15276 6.79586L5.19584 10.3499C5.14196 10.55 4.85804 10.55 4.80416 10.3499L3.84724 6.79586C3.82845 6.72607 3.77393 6.67155 3.70414 6.65276L0.150081 5.69584C-0.0500271 5.64196 -0.050027 5.35804 0.150081 5.30416L3.70414 4.34724C3.77393 4.32845 3.82845 4.27393 3.84724 4.20414L4.80416 0.650081Z" fill="#161616"/>
+              </svg>
+            {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
+                <path d="M1 6.5L6 1.5L11 6.5L6 11.5L1 6.5Z" stroke="#161616" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            {% endif %}
+          </div>
+          <div class="ai-product-badge-text-{{ ai_gen_id }}">{{ badge }}</div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Product Badges",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "This block displays badges from product metafields. Create a metafield namespace'custom' with key 'badges' of type 'Single-line text (List)' to use this block."
+    },
+    {
+      "type": "header",
+      "content": "Badge Style"
+    },
+    {
+      "type": "range",
+      "id": "badge_gap",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Space between badges",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "badge_padding",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Badge padding",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "badge_border_radius",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "label": "Badge corner radius",
+      "default": 4
+    },
+    {
+      "type": "color",
+      "id": "badge_background_color",
+      "label": "Badge background color",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "header",
+      "content": "Text Style"
+    },
+    {
+      "type": "range",
+      "id": "badge_text_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Text size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "badge_font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Regular"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semibold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "select",
+      "id": "badge_text_transform",
+      "label": "Text case",
+      "options": [
+        {
+          "value": "none",
+          "label": "Normal"
+        },
+        {
+          "value": "uppercase",
+          "label": "UPPERCASE"
+        },
+        {
+          "value": "lowercase",
+          "label": "lowercase"
+        },
+        {
+          "value": "capitalize",
+          "label": "Capitalize"
+        }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "color",
+      "id": "badge_text_color",
+      "label": "Text color",
+      "default": "#161616"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Badges"
+    }
+  ]
+}
+{% endschema %}

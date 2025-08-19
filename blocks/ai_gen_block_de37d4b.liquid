@@ -1,0 +1,125 @@
+{% doc %}
+  @prompt
+    I need to add breadcrumbs for the blog post.
+    Here is my code for breadcrumbs on products:
+    {% if section.settings.show_breadcrumbs %}
+    <div class="product_breadcrumbs">
+    <a href="/">Home</a>
+    <p>/</p>
+    {% if product.collections.first.title != blank %}
+    <a href="{{ product.collections.first.url }}">{{ product.collections.first.title }}</a>
+    <p>/</p>
+    {% endif %}
+    <p>{{ product.title }}</p>
+    </div>
+    {% endif %}
+    
+    You don't need to write the collection name itself at the end. It should just be a "/" symbol at the end.
+    And here are the styles for breadcrumbs:
+    .product_breadcrumbs{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    } 
+    
+    .product_breadcrumbs a, .product_breadcrumbs p{ 
+    color: #16161659; 
+    font-size: 14px; 
+    font-weight: 500; 
+    text-transform: uppercase; 
+    margin: 0; 
+    
+    @media screen and (width < 750px) { 
+    font-size: 12px; 
+    } 
+    } 
+    
+    .product_breadcrumbs p{ 
+    cursor: default; 
+    } 
+    
+    .product_breadcrumbs a{ 
+    cursor: pointer; 
+    
+    &:hover { 
+    color: #161616; 
+    } 
+    }, Не потрібно писати в кінці саму назву колекції. В кінці має бути лиш символ "/".
+    , Now there are two "/" characters at the end, but there should only be one, The structure should be as follows:
+    Home / Blog / blog name, The blog title should not be clickable.
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-blog-breadcrumbs-{{ ai_gen_id }} {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .ai-blog-breadcrumbs-{{ ai_gen_id }} a,
+  .ai-blog-breadcrumbs-{{ ai_gen_id }} p {
+    color: #16161659;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .ai-blog-breadcrumbs-{{ ai_gen_id }} p {
+    cursor: default;
+  }
+
+  .ai-blog-breadcrumbs-{{ ai_gen_id }} a {
+    cursor: pointer;
+  }
+
+  .ai-blog-breadcrumbs-{{ ai_gen_id }} a:hover {
+    color: #161616;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-blog-breadcrumbs-{{ ai_gen_id }} a,
+    .ai-blog-breadcrumbs-{{ ai_gen_id }} p {
+      font-size: 12px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-blog-breadcrumbs-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <a href="/">{{ block.settings.home_text }}</a>
+  <p>/</p>
+  <a href="/blogs/summerjewelrytrends">{{ block.settings.blogs_text }}</a>
+  <p>/</p>
+  <p>{{ article.title }}</p>
+</div>
+
+{% schema %}
+{
+  "name": "Blog Breadcrumbs",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "home_text",
+      "label": "Home text",
+      "default": "Home"
+    },
+    {
+      "type": "text",
+      "id": "blogs_text",
+      "label": "Blogs text",
+      "default": "Blog"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Blog Breadcrumbs"
+    }
+  ],
+  "class": "blog-breadcrumbs"
+}
+{% endschema %}

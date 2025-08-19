@@ -1,0 +1,329 @@
+{% doc %}
+  @prompt
+    Product badges, Great, but make the badges without position absolute and in a parent element with flex
+    
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-product-badge-wrapper-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: {{ block.settings.horizontal_alignment }};
+    align-items: {{ block.settings.vertical_alignment }};
+    width: 100%;
+    padding: {{ block.settings.badge_margin }}px;
+  }
+
+  .ai-product-badge-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    
+    {% if block.settings.badge_style == 'circle' %}
+      width: {{ block.settings.badge_size }}px;
+      height: {{ block.settings.badge_size }}px;
+      border-radius: 50%;
+    {% elsif block.settings.badge_style == 'square' %}
+      width: {{ block.settings.badge_size }}px;
+      height: {{ block.settings.badge_size }}px;
+      border-radius: {{ block.settings.badge_border_radius }}px;
+    {% else %}
+      padding: {{ block.settings.badge_padding }}px {{ block.settings.badge_padding | times: 1.5 }}px;
+      border-radius: {{ block.settings.badge_border_radius }}px;
+    {% endif %}
+    
+    background-color: {{ block.settings.badge_background_color }};
+    {% if block.settings.show_badge_border %}
+      border: {{ block.settings.badge_border_width }}px solid {{ block.settings.badge_border_color }};
+    {% endif %}
+    box-shadow: {% if block.settings.show_badge_shadow %}0 2px 5px rgba(0,0,0,0.2){% else %}none{% endif %};
+  }
+
+  .ai-product-badge-text-{{ ai_gen_id }} {
+    color: {{ block.settings.badge_text_color }};
+    font-size: {{ block.settings.badge_font_size }}px;
+    font-weight: {{ block.settings.badge_font_weight }};
+    line-height: 1.2;
+    {% if block.settings.badge_text_transform == 'uppercase' %}
+      text-transform: uppercase;
+    {% elsif block.settings.badge_text_transform == 'lowercase' %}
+      text-transform: lowercase;
+    {% elsif block.settings.badge_text_transform == 'capitalize' %}
+      text-transform: capitalize;
+    {% endif %}
+    {% if block.settings.badge_style == 'circle' or block.settings.badge_style == 'square' %}
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 4px;
+    {% endif %}
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-product-badge-wrapper-{{ ai_gen_id }} {
+      padding: {{ block.settings.badge_margin | times: 0.75 }}px;
+    }
+    
+    .ai-product-badge-{{ ai_gen_id }} {
+      {% if block.settings.badge_style == 'circle' or block.settings.badge_style == 'square' %}
+        width: {{ block.settings.badge_size | times: 0.75 }}px;
+        height: {{ block.settings.badge_size | times: 0.75 }}px;
+      {% else %}
+        padding: {{ block.settings.badge_padding | times: 0.75 }}px {{ block.settings.badge_padding | times: 1.2 }}px;
+      {% endif %}
+    }
+
+    .ai-product-badge-text-{{ ai_gen_id }} {
+      font-size: {{ block.settings.badge_font_size | times: 0.75 }}px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-product-badge-wrapper-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-product-badge-{{ ai_gen_id }}">
+    <span class="ai-product-badge-text-{{ ai_gen_id }}">{{ block.settings.badge_text }}</span>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Product Badge",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Badge Content"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge text",
+      "default": "Sale"
+    },
+    {
+      "type": "header",
+      "content": "Badge Position"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment",
+      "label": "Horizontal alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Right"
+        }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment",
+      "label": "Vertical alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Middle"
+        },
+        {
+          "value": "flex-end",
+          "label": "Bottom"
+        }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "range",
+      "id": "badge_margin",
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "unit": "px",
+      "label": "Padding around badge",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "Badge Style"
+    },
+    {
+      "type": "select",
+      "id": "badge_style",
+      "label": "Badge style",
+      "options": [
+        {
+          "value": "rectangle",
+          "label": "Rectangle"
+        },
+        {
+          "value": "circle",
+          "label": "Circle"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "default": "rectangle"
+    },
+    {
+      "type": "range",
+      "id": "badge_size",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Badge size",
+      "default": 50,
+      "info": "For circle and square styles"
+    },
+    {
+      "type": "range",
+      "id": "badge_padding",
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "label": "Badge padding",
+      "default": 10,
+      "info": "For rectangle style"
+    },
+    {
+      "type": "range",
+      "id": "badge_border_radius",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "label": "Badge corner radius",
+      "default": 4,
+      "info": "For rectangle and square styles"
+    },
+    {
+      "type": "header",
+      "content": "Badge Colors"
+    },
+    {
+      "type": "color",
+      "id": "badge_background_color",
+      "label": "Background color",
+      "default": "#ff0000"
+    },
+    {
+      "type": "color",
+      "id": "badge_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_badge_border",
+      "label": "Show border",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "badge_border_width",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "unit": "px",
+      "label": "Border width",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "badge_border_color",
+      "label": "Border color",
+      "default": "#000000"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_badge_shadow",
+      "label": "Show shadow",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Badge Typography"
+    },
+    {
+      "type": "range",
+      "id": "badge_font_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Font size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "badge_font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Regular"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semibold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "select",
+      "id": "badge_text_transform",
+      "label": "Text transform",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "uppercase",
+          "label": "Uppercase"
+        },
+        {
+          "value": "lowercase",
+          "label": "Lowercase"
+        },
+        {
+          "value": "capitalize",
+          "label": "Capitalize"
+        }
+      ],
+      "default": "uppercase"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Badge"
+    }
+  ],
+  "tag": null
+}
+{% endschema %}

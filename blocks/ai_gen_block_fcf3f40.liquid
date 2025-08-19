@@ -1,0 +1,569 @@
+{% doc %}
+  @prompt
+    Make a block where I can add badges for the product (it can be blocks). The badges themselves should be simple blocks without position absolute. I should also be able to change the text size in the badges, the text itself, its font-weight, the text color, and be able to add an icon to the badges. The icon should come first, and then the text, Added the ability to choose a custom icon for each badge. Also, let's make the badge texts come from the product metafield (Single line text (List)). For example, we will have a metafield list with texts. For example: Badges 1, Badges 2, Badges 3 (but note that this will not be one line with text, but an array). , Let's add a check, if there are no badges in our block, then it will be hidden., It is necessary to make it possible to add a custom icon to each badge separately. If there are 3 of them, then there should be a field for adding an icon. If there are 4 of them, then there should be 4 fields
+    
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-product-badges-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    gap: {{ block.settings.badge_gap }}px;
+    margin-bottom: {{ block.settings.margin_bottom }}px;
+  }
+
+  .ai-product-badge-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    padding: {{ block.settings.badge_padding_vertical }}px {{ block.settings.badge_padding_horizontal }}px;
+    background-color: {{ block.settings.badge_background_color }};
+    border-radius: {{ block.settings.badge_border_radius }}px;
+    gap: {{ block.settings.icon_text_gap }}px;
+  }
+
+  .ai-product-badge-icon-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: {{ block.settings.icon_size }}px;
+    height: {{ block.settings.icon_size }}px;
+    color: {{ block.settings.icon_color }};
+  }
+
+  .ai-product-badge-icon-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-product-badge-text-{{ ai_gen_id }} {
+    font-size: {{ block.settings.text_size }}px;
+    font-weight: {{ block.settings.text_weight }};
+    color: {{ block.settings.text_color }};
+    line-height: 1.2;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-product-badges-{{ ai_gen_id }} {
+      gap: {{ block.settings.badge_gap | divided_by: 1.5 }}px;
+    }
+
+    .ai-product-badge-{{ ai_gen_id }} {
+      padding: {{ block.settings.badge_padding_vertical | divided_by: 1.5 }}px {{ block.settings.badge_padding_horizontal | divided_by: 1.5 }}px;
+    }
+
+    .ai-product-badge-text-{{ ai_gen_id }} {
+      font-size: {{ block.settings.text_size | times: 0.85 }}px;
+    }
+
+    .ai-product-badge-icon-{{ ai_gen_id }} {
+      width: {{ block.settings.icon_size | times: 0.85 }}px;
+      height: {{ block.settings.icon_size | times: 0.85 }}px;
+    }
+  }
+{% endstyle %}
+
+{% assign product_badges = product.metafields[block.settings.metafield_namespace][block.settings.metafield_key].value %}
+{% if product_badges.size > 0 %}
+  <div class="ai-product-badges-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+    {% for badge_text in product_badges %}
+      {% if badge_text != blank %}
+        {% assign badge_index = forloop.index %}
+        {% assign show_icon_key = 'show_icon_' | append: badge_index %}
+        {% assign icon_type_key = 'icon_type_' | append: badge_index %}
+        {% assign custom_icon_key = 'custom_icon_' | append: badge_index %}
+        <div class="ai-product-badge-{{ ai_gen_id }}">
+          {% if block.settings[show_icon_key] %}
+            <div class="ai-product-badge-icon-{{ ai_gen_id }}">
+              {% assign icon_type = block.settings[icon_type_key] %}
+              {% case icon_type %}
+                {% when 'star' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                  </svg>
+                {% when 'check' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z"/>
+                  </svg>
+                {% when 'info' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z"/>
+                  </svg>
+                {% when 'alert' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22ZM11 15V17H13V15H11ZM11 7V13H13V7H11Z"/>
+                  </svg>
+                {% when 'new' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 4V16H8V4H20ZM20 2H8C6.9 2 6 2.9 6 4V16C6 17.1 6.9 18 8 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2ZM12.47 14L910.5L10.4 9.09L12.47 11.17L17.6 6L19 7.41L12.47 14ZM4 6H2V20C2 21.1 2.9 22 4 22H18V20H4V6Z"/>
+                  </svg>
+                {% when 'sale' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.5 7.5C9.5 6.7 8.8 6 8 6C7.2 6 6.5 6.7 6.5 7.5C6.5 8.3 7.2 9 8 9C8.8 9 9.5 8.3 9.5 7.5ZM16 6C15.2 6 14.5 6.7 14.5 7.5C14.5 8.3 15.2 9 16 9C16.8 9 17.5 8.3 17.5 7.5C17.5 6.7 16.8 6 16 6ZM21 5V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5ZM19 12H5V19H19V12ZM19 5H5V10H19V5Z"/>
+                  </svg>
+                {% when 'shipping' %}
+                  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 8H17V4H3C1.9 4 1 4.9 1 6V17H3C3 18.66 4.34 20 6 20C7.66 20 9 18.66 9 17H15C15 18.66 16.34 20 18 20C19.66 20 21 18.66 21 17H23V12L20 8ZM19.5 9.5L21.46 12H17V9.5H19.5ZM6 18C5.45 18 5 17.55 5 17C5 16.45 5.45 16 6 16C6.55 16 7 16.45 7 17C7 17.55 6.55 18 6 18ZM8.22 15C7.67 14.39 6.89 14 6 14C5.11 14 4.33 14.39 3.78 15H3V6H15V15H8.22ZM18 18C17.45 18 17 17.55 17 17C17 16.45 17.45 16 18 16C18.55 16 19 16.45 19 17C19 17.55 18.55 18 18 18Z"/>
+                  </svg>
+                {% when 'custom' %}
+                  {{ block.settings[custom_icon_key] }}
+              {% endcase %}
+            </div>{% endif %}
+          <span class="ai-product-badge-text-{{ ai_gen_id }}">{{ badge_text }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Product Badges",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Metafield Configuration"
+    },
+    {
+      "type": "text",
+      "id": "metafield_namespace",
+      "label": "Metafield namespace",
+      "default": "custom",
+      "info": "The namespace of the metafield containing badge texts"
+    },
+    {
+      "type": "text",
+      "id": "metafield_key",
+      "label": "Metafield key",
+      "default": "badges",
+      "info": "The key of the metafield containing badge texts (should be a list of single line text)"
+    },
+    {
+      "type": "header",
+      "content": "Badge Style"
+    },
+    {
+      "type": "color",
+      "id": "badge_background_color",
+      "label": "Background color",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "range",
+      "id": "badge_border_radius",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "label": "Border radius",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "badge_padding_horizontal",
+      "min": 4,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Horizontal padding",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "badge_padding_vertical",
+      "min": 2,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Vertical padding",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "badge_gap",
+      "min": 4,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Space between badges",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom margin",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Text Style"
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Text size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "text_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Regular"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semibold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "500"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#333333"
+    },
+    {
+      "type": "header",
+      "content": "Icon Settings"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 12,
+      "max": 36,
+      "step": 2,
+      "unit": "px",
+      "label": "Icon size",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "icon_text_gap",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Space between icon and text",
+      "default": 6
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon color",
+      "default": "#333333"
+    },
+    {
+      "type": "header",
+      "content": "Badge1 Icon"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon_1",
+      "label": "Show icon",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "icon_type_1",
+      "label": "Icon type",
+      "options": [
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "info",
+          "label": "Info"
+        },
+        {
+          "value": "alert",
+          "label": "Alert"
+        },
+        {
+          "value": "new",
+          "label": "New"
+        },
+        {
+          "value": "sale",
+          "label": "Sale"
+        },
+        {
+          "value": "shipping",
+          "label": "Shipping"
+        },
+        {
+          "value": "custom",
+          "label": "Custom SVG"
+        }
+      ],
+      "default": "check"
+    },
+    {
+      "type": "html",
+      "id": "custom_icon_1",
+      "label": "Custom SVG icon",
+      "info": "Paste your SVG code here. Only shown when 'Custom SVG' is selected.",
+      "default": "<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z'/></svg>"
+    },
+    {
+      "type": "header",
+      "content": "Badge 2 Icon"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon_2",
+      "label": "Show icon",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "icon_type_2",
+      "label": "Icon type",
+      "options": [
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "info",
+          "label": "Info"
+        },
+        {
+          "value": "alert",
+          "label": "Alert"
+        },
+        {
+          "value": "new",
+          "label": "New"
+        },
+        {
+          "value": "sale",
+          "label": "Sale"
+        },
+        {
+          "value": "shipping",
+          "label": "Shipping"
+        },
+        {
+          "value": "custom",
+          "label": "Custom SVG"
+        }
+      ],
+      "default": "info"
+    },
+    {
+      "type": "html",
+      "id": "custom_icon_2",
+      "label": "Custom SVG icon",
+      "info": "Paste your SVG code here. Only shown when 'Custom SVG' is selected.",
+      "default": "<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z'/></svg>"
+    },
+    {
+      "type": "header",
+      "content": "Badge 3 Icon"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon_3",
+      "label": "Show icon",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "icon_type_3",
+      "label": "Icon type",
+      "options": [
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "info",
+          "label": "Info"
+        },
+        {
+          "value": "alert",
+          "label": "Alert"
+        },
+        {
+          "value": "new",
+          "label": "New"
+        },
+        {
+          "value": "sale",
+          "label": "Sale"
+        },
+        {
+          "value": "shipping",
+          "label": "Shipping"
+        },
+        {
+          "value": "custom",
+          "label": "Custom SVG"
+        }
+      ],
+      "default": "new"
+    },
+    {
+      "type": "html",
+      "id": "custom_icon_3",
+      "label": "Custom SVG icon",
+      "info": "Paste your SVG code here. Only shown when 'Custom SVG' is selected.",
+      "default": "<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z'/></svg>"
+    },
+    {
+      "type": "header",
+      "content": "Badge 4 Icon"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon_4",
+      "label": "Show icon",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "icon_type_4",
+      "label": "Icon type",
+      "options": [
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "info",
+          "label": "Info"
+        },
+        {
+          "value": "alert",
+          "label": "Alert"
+        },
+        {
+          "value": "new",
+          "label": "New"
+        },
+        {
+          "value": "sale",
+          "label": "Sale"
+        },
+        {
+          "value": "shipping",
+          "label": "Shipping"
+        },
+        {
+          "value": "custom",
+          "label": "Custom SVG"
+        }
+      ],
+      "default": "sale"
+    },
+    {
+      "type": "html",
+      "id": "custom_icon_4",
+      "label": "Custom SVG icon",
+      "info": "Paste your SVG code here. Only shown when 'Custom SVG' is selected.",
+      "default": "<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z'/></svg>"
+    },
+    {
+      "type": "header",
+      "content": "Badge 5 Icon"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon_5",
+      "label": "Show icon",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "icon_type_5",
+      "label": "Icon type",
+      "options": [
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "info",
+          "label": "Info"
+        },
+        {
+          "value": "alert",
+          "label": "Alert"
+        },
+        {
+          "value": "new",
+          "label": "New"
+        },
+        {
+          "value": "sale",
+          "label": "Sale"
+        },
+        {
+          "value": "shipping",
+          "label": "Shipping"
+        },
+        {
+          "value": "custom",
+          "label": "Custom SVG"
+        }
+      ],
+      "default": "shipping"
+    },
+    {
+      "type": "html",
+      "id": "custom_icon_5",
+      "label": "Custom SVG icon",
+      "info": "Paste your SVG code here. Only shown when 'Custom SVG' is selected.",
+      "default": "<svg viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z'/></svg>"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Badges"
+    }
+  ]
+}
+{% endschema %}

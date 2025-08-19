@@ -1,0 +1,105 @@
+{%- assign product_badges = product.metafields.custom.badges.value -%}
+
+{% stylesheet %}
+  .product-badges {
+    position: absolute;
+    z-index: var(--layer-flat);
+    --badge-inset: max(var(--padding-xs), calc((var(--border-radius) + var(--padding-xs)) * (1 - cos(45deg))));
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .product-badges--bottom-left {
+    bottom: calc(var(--badge-inset) + var(--padding-block-start));
+    left: calc(var(--badge-inset) + var(--padding-inline-start));
+    align-items: flex-start;
+  }
+
+  .product-badges--top-left {
+    top: calc(var(--badge-inset) + var(--padding-block-start));
+    left: calc(var(--badge-inset) + var(--padding-inline-start));
+    align-items: flex-start;
+  }
+
+  .product-badges--top-right {
+    top: calc(var(--badge-inset) + var(--padding-block-start));
+    right: calc(var(--badge-inset) + var(--padding-inline-start));
+    align-items: flex-end;
+  }
+
+  .product-badges__badge {
+    --badge-font-size: var(--font-size--xs);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    text-align: center;
+    color: var(--color-foreground);
+    background: var(--color-background);
+    font-size: var(--badge-font-size);
+    font-family: var(--badge-font-family);
+    font-weight: var(--badge-font-weight);
+    text-transform: var(--badge-text-transform);
+    border-radius: var(--badge-border-radius);
+  }
+
+  .product-badges__badge--rectangle {
+    padding-block: var(--badge-rectangle-padding-block);
+    padding-inline: var(--badge-rectangle-padding-inline);
+  }
+{% endstylesheet %}
+
+{%- if product.available == false or product.compare_at_price > product.price or product_badges.size > 0 -%}
+  <div
+    class="product-badges product-badges--{{ settings.badge_position }}"
+    style="
+      --badge-border-radius: {{ settings.badge_corner_radius }}px;
+      --badge-font-family: var(--font-{{ settings.badge_font_family }}--family); --badge-font-weight: var(--font-{{ settings.badge_font_family }}--weight); --badge-text-transform: {{ settings.badge_text_transform }};
+    "
+  >
+    {%- if product.available == false -%}
+      <div class="product-badges__badge product-badges__badge--rectangle color-{{ settings.badge_sold_out_color_scheme }}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+          <path d="M1 9.5L9 1.5M9 9.5L1 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>OUT OF STOCK</span>
+      </div>
+    {%- endif -%}
+
+    {%- if product.compare_at_price > product.price and product.available -%}
+      <div class="product-badges__badge product-badges__badge--rectangle color-{{ settings.badge_sale_color_scheme }}">
+        {{ 'content.product_badge_sale' | t }}
+      </div>
+    {%- endif -%}
+
+    {%- if product_badges.size > 0 and product.available -%}
+      {%- for badge in product_badges -%}
+        {%- if badge != blank -%}
+          <div class="product-badges__badge product-badges__badge--rectangle">
+            {%- case badge -%}
+              {%- when 'BEST SELLER' -%}
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewbox="0 0 10 11" fill="none">
+                  <rect x="0.5" y="1" width="9" height="9" rx="4.5" fill="currentColor"></rect>
+                  <rect x="0.5" y="1" width="9" height="9" rx="4.5" stroke="#161616"></rect>
+                  <circle cx="5" cy="5.5" r="3" fill="white"></circle>
+                </svg>
+              {%- when 'NEW' -%}
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="11" viewBox="0 0 10 11" fill="none">
+                  <path d="M4.80416 0.650081C4.85804 0.449973 5.14196 0.449973 5.19584 0.650081L6.15276 4.20414C6.17155 4.27393 6.22607 4.32845 6.29586 4.34724L9.84992 5.30416C10.05 5.35804 10.05 5.64196 9.84992 5.69584L6.29586 6.65276C6.22607 6.67155 6.17155 6.72607 6.15276 6.79586L5.19584 10.3499C5.14196 10.55 4.85804 10.55 4.80416 10.3499L3.84724 6.79586C3.82845 6.72607 3.77393 6.67155 3.70414 6.65276L0.150081 5.69584C-0.0500271 5.64196 -0.050027 5.35804 0.150081 5.30416L3.70414 4.34724C3.77393 4.32845 3.82845 4.27393 3.84724 4.20414L4.80416 0.650081Z" fill="#161616"/>
+                </svg>
+              {%- else -%}
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
+                  <path d="M1 6.5L6 1.5L11 6.5L6 11.5L1 6.5Z" stroke="#161616" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+            {%- endcase -%}
+            <span>{{ badge }}</span>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+  </div>
+{%- endif -%}

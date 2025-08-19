@@ -1,0 +1,198 @@
+
+
+{% doc %}
+  This block is used to display the add to cart button.
+  Intended for product-form.liquid block.
+
+  @param {string} can_add_to_cart - Whether the product can be added to the cart
+  @param {string} add_to_cart_text - The text of the add to cart button
+{% enddoc %}
+
+<script>
+  console.log('product', {{ product | json }})
+</script>
+
+<script type="application/json" data-product-json>
+  {{ product | json }}
+</script>
+
+{% liquid
+  assign class = 'add-to-cart-button ' | append: block.settings.style_class
+  assign id = 'BuyButtons-ProductSubmitButton-' | append: block.id
+%}
+
+<span
+  {{ block.shopify_attributes }}
+  style="--add-to-cart-font-case: {{ settings.button_text_case }};"
+>
+  {% render 'add-to-cart-button',
+    id: id,
+    class: class,
+    can_add_to_cart: can_add_to_cart,
+    product: block.settings.product,
+    add_to_cart_text: add_to_cart_text,
+    block: block
+  %}
+</span>
+
+{% schema %}
+{
+  "name": "t:names.add_to_cart",
+  "tag": null,
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "t:settings.product"
+    },
+    {
+      "type": "select",
+      "id": "style_class",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "button",
+          "label": "t:options.primary"
+        },
+        {
+          "value": "button-secondary",
+          "label": "t:options.secondary"
+        }
+      ],
+      "default": "button-secondary"
+    },
+    {
+      "type": "header",
+      "content": "Avaible settings"
+    },
+    {
+      "type": "text",
+      "id": "in_stock_text",
+      "label": "In stock text",
+      "default": "In stock - ready to ship"
+    },
+    {
+      "type": "text",
+      "id": "out_of_stock_text",
+      "label": "Out of stock text",
+      "default": "Out of stock"
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Text size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "text_weight",
+      "label": "Text weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Regular"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semibold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "500"
+    },
+    {
+      "type": "header",
+      "content": "Icon Settings"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 12,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Icon size",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "In Stock Appearance"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_in_stock_icon",
+      "label": "Custom in stock icon (SVG recommended)"
+    },
+    {
+      "type": "color",
+      "id": "in_stock_color",
+      "label": "Default icon background color",
+      "default": "#008060",
+      "info": "Used when no custom icon is uploaded"
+    },
+    {
+      "type": "color",
+      "id": "in_stock_text_color",
+      "label": "Text color",
+      "default": "#008060"
+    },
+    {
+      "type": "header",
+      "content": "Out of Stock Appearance"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_out_of_stock_icon",
+      "label": "Custom out of stock icon (SVG recommended)"
+    },
+    {
+      "type": "color",
+      "id": "out_of_stock_color",
+      "label": "Default icon background color",
+      "default": "#D82C0D",
+      "info": "Used when no custom icon is uploaded"
+    },
+    {
+      "type": "color",
+      "id": "out_of_stock_text_color",
+      "label": "Text color",
+      "default": "#D82C0D"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Margin top",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Margin bottom",
+      "default": 8
+    }
+  ]
+}
+{% endschema %}

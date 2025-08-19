@@ -1,0 +1,479 @@
+{% doc %}
+  @prompt
+    Make a block where I can add badges for the product (it can be blocks). The badges themselves should be simple blocks without position absolute. I should also be able to change the text size in the badges, the text itself, its font-weight, the text color, and be able to add an icon to the badges. The icon should come first, and then the text, Added the ability to choose a custom icon for each badge. Also, let's make the badge texts come from the product metafield. For example, we will have a metafield list with texts. For example: Badges 1, Badges 2, Badges 3 (but note that this will not be one line with text, but an array).
+    , Let's add a check, if there are no badges in our block, then it will be hidden.
+    
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-product-badges-container-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    gap: {{ block.settings.badge_spacing }}px;
+    margin-bottom: {{ block.settings.container_margin_bottom }}px;
+  }
+
+  .ai-product-badge-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    padding: {{ block.settings.badge_padding }}px;
+    background-color: {{ block.settings.badge_background_color }};
+    border-radius: {{ block.settings.badge_border_radius }}px;
+    gap: {{ block.settings.icon_text_spacing }}px;
+  }
+
+  .ai-product-badge-icon-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: {{ block.settings.icon_size }}px;
+    height: {{ block.settings.icon_size }}px;
+    color: {{ block.settings.icon_color }};
+  }
+
+  .ai-product-badge-text-{{ ai_gen_id }} {
+    font-size: {{ block.settings.text_size }}px;
+    font-weight: {{ block.settings.text_weight }};
+    color: {{ block.settings.text_color }};
+    line-height: 1.2;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-product-badges-container-{{ ai_gen_id }} {
+      gap: {{ block.settings.badge_spacing | divided_by: 1.5 }}px;
+    }
+    
+    .ai-product-badge-{{ ai_gen_id }} {
+      padding: {{ block.settings.badge_padding | divided_by: 1.5 }}px;
+    }
+    
+    .ai-product-badge-icon-{{ ai_gen_id }} {
+      width: {{ block.settings.icon_size | divided_by: 1.2 }}px;
+      height: {{ block.settings.icon_size | divided_by: 1.2 }}px;
+    }
+    
+    .ai-product-badge-text-{{ ai_gen_id }} {
+      font-size: {{ block.settings.text_size | divided_by: 1.2 }}px;
+    }
+  }
+{% endstyle %}
+
+{% assign badges = product.metafields[block.settings.metafield_namespace][block.settings.metafield_key] %}
+{% assign has_badges = false %}
+
+{% if badges != blank and badges.size > 0 %}
+  {% for badge_text in badges %}
+    {% if badge_text != blank %}
+      {% assign has_badges = true %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if has_badges %}
+  <div class="ai-product-badges-container-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+    {% for badge_text in badges %}
+      {% assign badge_index = forloop.index %}
+      {% assign icon_key = 'badge_' | append: badge_index | append: '_icon' %}
+      
+      {% if badge_index <= 3 and badge_text != blank %}
+        <div class="ai-product-badge-{{ ai_gen_id }}">
+          {% assign icon_setting = block.settings[icon_key] %}
+          {% if icon_setting != blank %}
+            <div class="ai-product-badge-icon-{{ ai_gen_id }}">
+              {% if icon_setting == 'custom_1' %}
+                {{ block.settings.custom_icon_1 }}
+              {% elsif icon_setting == 'custom_2' %}
+                {{ block.settings.custom_icon_2 }}
+              {% elsif icon_setting == 'custom_3' %}
+                {{ block.settings.custom_icon_3 }}
+              {% else %}
+                {% case icon_setting %}
+                  {% when 'check' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  {% when 'star' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  {% when 'heart' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                  {% when 'truck' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                  {% when 'shield' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  {% when 'tag' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                  {% when 'gift' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                  {% when 'clock' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="{{ block.settings.icon_size }}" height="{{ block.settings.icon_size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                {% endcase %}
+              {% endif %}
+            </div>
+          {% endif %}
+          <span class="ai-product-badge-text-{{ ai_gen_id }}">{{ badge_text }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Product Badges",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Metafield Configuration"
+    },
+    {
+      "type": "paragraph",
+      "content": "This block uses product metafields to display badges. Create a list-type metafield with badge texts."
+    },
+    {
+      "type": "text",
+      "id": "metafield_namespace",
+      "label": "Metafield namespace",
+      "default": "custom"
+    },
+    {
+      "type": "text",
+      "id": "metafield_key",
+      "label": "Metafield key",
+      "default": "badges"
+    },
+    {
+      "type": "header",
+      "content": "General Badge Settings"
+    },
+    {
+      "type": "range",
+      "id": "badge_spacing",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Space between badges",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "container_margin_bottom",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom margin",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "badge_padding",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Badge padding",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "badge_border_radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Badge border radius",
+      "default": 4
+    },
+    {
+      "type": "color",
+      "id": "badge_background_color",
+      "label": "Badge background color",
+      "default": "#f4f4f4"
+    },
+    {
+      "type": "header",
+      "content": "Text Settings"
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Text size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "text_weight",
+      "label": "Text weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Regular"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semibold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "500"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#333333"
+    },
+    {
+      "type": "header",
+      "content": "Icon Settings"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "Icon size",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "icon_text_spacing",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Space between icon and text",
+      "default": 6
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Badge 1 Icon"
+    },
+    {
+      "type": "select",
+      "id": "badge_1_icon",
+      "label": "Badge 1 icon",
+      "options": [
+        {
+          "value": "",
+          "label": "None"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "heart",
+          "label": "Heart"
+        },
+        {
+          "value": "truck",
+          "label": "Truck"
+        },
+        {
+          "value": "shield",
+          "label": "Shield"
+        },
+        {
+          "value": "tag",
+          "label": "Tag"
+        },
+        {
+          "value": "gift",
+          "label": "Gift"
+        },
+        {
+          "value": "clock",
+          "label": "Clock"
+        },
+        {
+          "value": "custom_1",
+          "label": "Custom Icon 1"
+        },
+        {
+          "value": "custom_2",
+          "label": "Custom Icon 2"
+        },
+        {
+          "value": "custom_3",
+          "label": "Custom Icon 3"
+        }
+      ],
+      "default": "truck"
+    },
+    {
+      "type": "header",
+      "content": "Badge 2 Icon"
+    },
+    {
+      "type": "select",
+      "id": "badge_2_icon",
+      "label": "Badge 2 icon",
+      "options": [
+        {
+          "value": "",
+          "label": "None"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "heart",
+          "label": "Heart"
+        },
+        {
+          "value": "truck",
+          "label": "Truck"
+        },
+        {
+          "value": "shield",
+          "label": "Shield"
+        },
+        {
+          "value": "tag",
+          "label": "Tag"
+        },
+        {
+          "value": "gift",
+          "label": "Gift"
+        },
+        {
+          "value": "clock",
+          "label": "Clock"
+        },
+        {
+          "value": "custom_1",
+          "label": "Custom Icon 1"
+        },
+        {
+          "value": "custom_2",
+          "label": "Custom Icon 2"
+        },
+        {
+          "value": "custom_3",
+          "label": "Custom Icon 3"
+        }
+      ],
+      "default": "shield"
+    },
+    {
+      "type": "header",
+      "content": "Badge 3 Icon"
+    },
+    {
+      "type": "select",
+      "id": "badge_3_icon",
+      "label": "Badge 3 icon",
+      "options": [
+        {
+          "value": "",
+          "label": "None"
+        },
+        {
+          "value": "check",
+          "label": "Check"
+        },
+        {
+          "value": "star",
+          "label": "Star"
+        },
+        {
+          "value": "heart",
+          "label": "Heart"
+        },
+        {
+          "value": "truck",
+          "label": "Truck"
+        },
+        {
+          "value": "shield",
+          "label": "Shield"
+        },
+        {
+          "value": "tag",
+          "label": "Tag"
+        },
+        {
+          "value": "gift",
+          "label": "Gift"
+        },
+        {
+          "value": "clock",
+          "label": "Clock"
+        },
+        {
+          "value": "custom_1",
+          "label": "Custom Icon 1"
+        },
+        {
+          "value": "custom_2",
+          "label": "Custom Icon 2"
+        },
+        {
+          "value": "custom_3",
+          "label": "Custom Icon 3"
+        }
+      ],
+      "default": "check"
+    },
+    {
+      "type": "header",
+      "content": "Custom Icons"
+    },
+    {
+      "type": "liquid",
+      "id": "custom_icon_1",
+      "label": "Custom icon 1 (SVG)",
+      "info": "Paste SVG code here"
+    },
+    {
+      "type": "liquid",
+      "id": "custom_icon_2",
+      "label": "Custom icon 2 (SVG)",
+      "info": "Paste SVG code here"
+    },
+    {
+      "type": "liquid",
+      "id": "custom_icon_3",
+      "label": "Custom icon 3 (SVG)",
+      "info": "Paste SVG code here"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Badges"
+    }
+  ]
+}
+{% endschema %}

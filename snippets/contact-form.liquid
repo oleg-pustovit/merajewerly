@@ -1,0 +1,797 @@
+{% comment %}
+  Renders a contact form with name, email, phone, and comment fields.
+
+  Accepts:
+
+  @param {object} settings - Settings for 'spacing-style' and 'size-style' snippets in the contact form.
+  @param {string} submit_button - HTML for the submit button (rendered via content_for block)
+{% endcomment %}
+
+{% stylesheet %}
+  .contact-form__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+  }
+
+  .contact-form__form-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+
+    @media screen and (width >= 750px) {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  .contact-form__input {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-foreground);
+    background-color: var(--color-input-background);
+    padding: var(--padding-lg) var(--padding-xl);
+    border-radius: var(--style-border-radius-inputs);
+    border: var(--style-border-width-inputs) solid var(--color-input-border);
+    border: var(--style-border-width-inputs) solid #EDEDED;
+    -webkit-font-smoothing: antialiased;
+    transition: 0.3s all;
+    color: #161616;
+  }
+  .contact-form__input:focus {
+    outline: none;
+    border: var(--style-border-width-inputs) solid rgba(22, 22, 22, 0.18);
+  }
+
+  .contact-form__input::placeholder {
+    color: rgba(22, 22, 22, 0.45);
+  }
+  .contact-form__input:hover {
+    border: var(--style-border-width-inputs) solid rgba(22, 22, 22, 0.18);
+    background: none;
+  }
+
+  .contact-form__input--textarea {
+    resize: vertical;
+    min-height: var(--input-textarea-min-height);
+  }
+
+  .contact-form__error,
+  .contact-form__success {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-xs);
+  }
+
+
+
+  .popup-link__button svg {
+    display: inline-block;
+    position: relative;
+    top: var(--margin-2xs);
+  }
+
+  .popup-link__content {
+    box-shadow: var(--shadow-popover);
+    border: var(--style-border-popover);
+    border-radius: var(--style-border-radius-popover);
+    background-color: var(--color-background);
+    padding: var(--padding-4xl) var(--padding-xl) var(--padding-xl);
+    max-width: var(--normal-content-width);
+    max-height: var(--modal-max-height);
+
+    @media screen and (min-width: 750px) {
+      padding: var(--padding-5xl);
+    }
+  }
+
+  .popup-link__content[open] {
+    animation: modalSlideInTop var(--animation-speed) var(--animation-easing) forwards;
+  }
+
+  .popup-link__content.dialog-closing {
+    animation: modalSlideOutTop var(--animation-speed) var(--animation-easing) forwards;
+  }
+
+  .popup-link__content--drawer {
+    position: fixed;
+    border-radius: 0;
+    width: var(--sidebar-width);
+    max-width: 95vw;
+    height: 100%;
+    margin: 0 0 0 auto;
+  }
+
+  /* Needed to ensure the drawer is full height */
+  .popup-link__content--drawer:modal {
+    max-height: 100dvh;
+  }
+
+  .popup-link__close {
+    position: absolute;
+    top: var(--margin-2xs);
+    right: var(--margin-2xs);
+    width: var(--minimum-touch-target);
+    height: var(--minimum-touch-target);
+    color: var(--color-foreground);
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .popup-link__close {
+    background-color: transparent;
+    opacity: 0.8;
+  }
+
+  .popup-link__close svg {
+    width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
+  }
+
+  
+{% endstylesheet %}
+<style>
+  .custom-section-content {
+    align-items: center !important;
+  }
+  .contact-form__content-blocks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+  .contact-form__content-block {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .contact-form__content-block .subtitle {
+    margin-bottom: 4px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 150%;
+    letter-spacing: -1%;
+    vertical-align: middle;
+    color: rgba(22, 22, 22, 0.6);
+  }
+  .contact-form__content-block h2 {
+    margin: 0;
+  }
+
+
+/* Animation */
+.copyable-title {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  position: relative;
+}
+
+.copyable-title:hover {
+  opacity: 0.8;
+}
+
+.copyable-title.is-animating {
+  animation: fade-out-in 0.6s ease-in-out;
+}
+
+@keyframes fade-out-in {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  49% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  51% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+  .popup-link__content.dialog-modal {
+    max-width: 956px;
+    width: 100%;
+    max-height: 800px;
+    overflow-y: auto;
+    padding: 80px
+  }
+  .inquiry-blocks {
+    display: grid;
+    gap: 30px;
+    grid-template-columns: 1fr 1fr 1fr;
+    
+  }
+  .inquiry-blocks .inquiry-block {
+    border: 1px solid #EDEDED;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.3s all;
+    position: relative;
+  }
+  .inquiry-blocks .inquiry-block:hover {
+      border: 1px solid rgba(22, 22, 22, 0.18);
+  }
+  .inquiry-blocks .inquiry-block .subtitle {
+    margin-top: 10px;
+  }
+  .popup-link__content.dialog-modal .button.btn-primary {
+    width: 100%;
+    margin-top: 30px;
+  }
+  .inquiry-block .selected-checkbox {
+    opacity: 0;
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    transition: 0.3s all;
+  }
+  .inquiry-block.selected .selected-checkbox {
+     opacity: 1;
+  }
+  .button.popup-link__close {
+    --button-border-color: none !important;
+  }
+  .inquiry-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-transform: capitalize;
+  
+  }
+  .inquiry-btn .arrow-right {
+    display: block;
+    top: 0;
+  }
+
+  .contact-form__success.toast {
+    position: fixed;
+    right: 0;
+    background: white;
+    padding: 20px;
+    bottom: 100px;
+    z-index: 99999;
+    box-shadow: 0px 1px 11px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0px 1px 11px 0px rgba(0,0,0,0.1);
+    -moz-box-shadow: 0px 1px 11px 0px rgba(0,0,0,0.1);
+  }
+
+
+  .popup-link__inner .title {
+    margin-bottom: 30px;
+  }
+
+  .contact-form-wrapper.two-column {
+    display: grid;
+    grid-template-columns: 1fr 0.7fr;
+    gap: 80px;
+  }
+  .contact-form__content-block h2 { 
+    font-size: 24px;
+    text-transform: none;
+  }
+  .inquiry-btn span {
+    color: #161616;
+  }
+  .inquiry-btn span.gray {
+    color: rgba(22,22,22,0.45)
+  }
+  @media(max-width: 1300px) {
+    .contact-form-wrapper.two-column {
+      gap: 40px;
+      grid-template-columns: 1fr 0.5fr;
+    }
+  }
+  @media(max-width: 1168px) {
+    .contact-form__content-block h2 {
+      font-size: 20px;
+    }
+     .contact-form-wrapper.two-column {
+      grid-template-columns: 1fr;
+    }
+    .image-wrapper {
+      display: none;
+    }
+  }
+  @media(max-width: 749px) {
+    .contact-form__content-block .subtitle {
+      font-size: 14px;
+    }
+    .button.popup-link__close {
+      top: 12px;
+    }
+    .button.popup-link__close svg {
+      width: 16px;
+      height: 16px;
+      
+    }
+    .contact-form__content-blocks {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .inquiry-blocks {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .popup-link__content.dialog-modal {
+      padding: 24px 16px;
+    }
+    .popup-link__inner .title {
+      text-align: left;
+      font-weight: 500;
+      font-size: 24px;
+      line-height: 100%;
+      letter-spacing: -1%;
+
+    }
+  }
+</style>
+
+
+<script
+  src="{{ 'dialog.js' | asset_url }}"
+  type="module"
+></script>
+
+
+
+<div
+  class="
+    contact-form
+    spacing-style size-style
+    {% if settings.inherit_color_scheme == false %}color-{{ settings.color_scheme }}{% endif %}
+  "
+  style="
+    {% render 'spacing-style', settings: settings %}
+    {% render 'size-style', settings: settings %}
+  "
+  {{ block.shopify_attributes }}
+>
+  {% assign form_id = block.id | default: section.id | prepend: 'ContactForm-' %}
+  <div class="contact-form-wrapper {% if settings.image_banner %} two-column {% endif %}">
+    <div class="form-wrapper">
+      
+  <div class="contact-form__content-blocks">
+    {% if settings.first_block_subtitle or settings.first_block_title %}
+    <div class="contact-form__content-block" style="background: {{ settings.first_block_bg }}">
+      {% if settings.first_block_subtitle %}
+        <p class="subtitle">
+        {{ settings.first_block_subtitle }}
+        </p>
+      {% endif %}
+       {% if settings.first_block_title %}
+        <h2 class="copyable-title">
+          {{ settings.first_block_title }}
+        </h2>
+      {% endif %}
+    </div>
+    {% endif %}
+
+
+   {% if settings.second_block_subtitle or settings.second_block_title %}
+    <div class="contact-form__content-block" style="background: {{ settings.second_block_bg }}">
+      {% if settings.second_block_subtitle %}
+        <p class="subtitle">
+        {{ settings.second_block_subtitle }}
+        </p>
+      {% endif %}
+       {% if settings.second_block_title %}
+        <h2 class="copyable-title">
+          {{ settings.second_block_title }}
+        </h2>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const copyableTitles = document.querySelectorAll('.copyable-title');
+  const animationDuration = 600; 
+
+  copyableTitles.forEach(title => {
+    const originalText = title.innerText;
+    title.dataset.originalText = originalText;
+
+    title.addEventListener('click', function(event) {
+      const element = event.currentTarget;
+      if (element.classList.contains('is-animating')) {
+        return; 
+      }
+      if (element.innerText == 'Copied!') {
+        return;
+      }
+
+      const textToCopy = element.dataset.originalText;
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        element.classList.add('is-animating');
+        
+        setTimeout(() => {
+          element.innerText = 'Copied!';
+        }, animationDuration / 2);
+
+        element.addEventListener('animationend', () => {
+          element.classList.remove('is-animating');
+        }, { once: true }); 
+
+        setTimeout(() => {
+          element.classList.add('is-animating');
+
+          setTimeout(() => {
+            element.innerText = element.dataset.originalText;
+          }, animationDuration / 2);
+
+          element.addEventListener('animationend', () => {
+            element.classList.remove('is-animating');
+          }, { once: true });
+
+        }, 2000);
+
+      }).catch(err => {
+        console.error('Error: ', err);
+      });
+    });
+  });
+});
+document.addEventListener('DOMContentLoaded', () => {
+  // --- Знаходимо всі елементи ---
+  const inquiryBlocks = document.querySelectorAll('.inquiry-block');
+  const hiddenInput = document.getElementById('ContactForm-inquiry');
+  const btn = document.querySelector('.inquiry-btn span');
+  const applyButton = document.getElementById('ApplyInquiryButton');
+
+  // --- Перевіряємо, чи всі елементи на місці ---
+  if (!inquiryBlocks.length || !hiddenInput || !applyButton) {
+    console.warn('Один або більше елементів для вибору теми не знайдено.');
+    return;
+  }
+
+  // --- Логіка вибору блоку ---
+  inquiryBlocks.forEach(block => {
+    block.addEventListener('click', function() {
+      // `this` посилається на блок, на який клікнули
+      const clickedBlock = this;
+
+      // Знімаємо клас 'selected' з усіх блоків
+      inquiryBlocks.forEach(b => {
+        b.classList.remove('selected');
+      });
+
+      // Додаємо клас 'selected' тільки до натиснутого блоку
+      clickedBlock.classList.add('selected');
+
+      // ВАЛІДАЦІЯ: робимо кнопку "Apply" активною
+      applyButton.disabled = false;
+    });
+  });
+
+  // --- Логіка кнопки "Apply" ---
+  applyButton.addEventListener('click', function() {
+    // Знаходимо блок, який наразі має клас 'selected'
+    const selectedBlock = document.querySelector('.inquiry-block.selected');
+
+    if (selectedBlock) {
+      // Знаходимо текст сабтайтлу всередині обраного блоку
+      const subtitleElement = selectedBlock.querySelector('.subtitle');
+      
+      if (subtitleElement) {
+        const subtitleText = subtitleElement.innerText.trim();
+        
+        // Встановлюємо цей текст як значення нашого прихованого input
+        hiddenInput.value = subtitleText;
+        btn.innerHTML = subtitleText;
+        btn.classList.remove('gray');
+        console.log(`Обрана тема: "${subtitleText}" додана в input.`);
+
+        // Тут ви можете додати код для закриття модального вікна, наприклад:
+        // document.querySelector('dialog-component').closeDialog();
+        // або
+        // this.closest('dialog').close();
+      }
+    } else {
+      // Цей блок спрацює, якщо кнопка якось стала активною без вибору
+      console.warn('Кнопка "Apply" натиснута, але жоден блок не обрано.');
+    }
+  });
+});
+          
+</script>
+
+  {%- form 'contact', id: form_id, class: 'contact-form__form' -%}
+
+
+    <div class="contact-form__form-row">
+      <label
+        class="visually-hidden"
+        for="ContactForm-name"
+      >
+        {{- 'blocks.contact_form.name' | t -}}
+      </label>
+      <input
+        type="text"
+        id="ContactForm-name"
+        class="contact-form__input"
+        autocomplete="name"
+        name="contact[name]"
+        value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
+        placeholder="{{ 'blocks.contact_form.name' | t }}"
+      >
+      <label
+        class="visually-hidden"
+        for="ContactForm-phone"
+      >
+        {{- 'blocks.contact_form.phone' | t -}}
+      </label>
+    
+      <input
+        type="tel"
+        id="ContactForm-phone"
+        class="contact-form__input"
+        autocomplete="tel"
+        name="contact[phone]"
+        pattern="^\+?[\d\s\(\)\-]*"
+        value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}"
+        placeholder="{{ 'blocks.contact_form.phone' | t }}"
+      >
+     
+    </div>
+
+   <label
+        class="visually-hidden"
+        for="ContactForm-email"
+      >
+        {{- 'blocks.contact_form.email' | t -}}
+        <span aria-hidden="true">*</span></label
+      >
+      <input
+        type="email"
+        id="ContactForm-email"
+        class="contact-form__input"
+        autocomplete="email"
+        name="contact[email]"
+        spellcheck="false"
+        autocapitalize="off"
+        value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}"
+        aria-required="true"
+        {% if form.errors contains 'email' %}
+          aria-invalid="true"
+          aria-describedby="ContactForm-email-error"
+        {% endif %}
+        placeholder="{{ 'blocks.contact_form.email' | t }}"
+      >
+
+       <label
+        class="visually-hidden"
+        for="ContactForm-email"
+      >
+        {{- 'blocks.contact_form.inquiry' | t -}}
+        <span aria-hidden="true">*</span></label
+      >
+
+     <div class="dialog-component-wrapper">
+
+    
+      <dialog-component
+        class="popup-link"
+        {{ block.shopify_attributes }}
+      >
+       <button
+          on:click="/showDialog"
+           type="button"
+          class="contact-form__input inquiry-btn button button-unstyled popup-link__button text-left spacing-style {{ block.settings.type_preset }}"
+          style="{% render 'spacing-style', settings: block.settings %}"
+        >
+         
+          <span class="gray">{{ 'blocks.contact_form.inquiry' | t }}</span>
+          
+          <svg class="arrow-right" width="6" height="10" viewBox="0 0 6 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 9L5 5L1 1" stroke="#161616" stroke-opacity="0.45" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+
+        </button>
+      
+        <dialog
+          ref="dialog"
+          class="popup-link__content dialog-modal color-{{ settings.popover_color_scheme }}{% if block.settings.behavior == 'drawer' %} popup-link__content--drawer dialog-drawer{% endif %}"
+        >
+
+          <div class="popup-link__inner">
+            <h1 class="title text-center">{{ 'blocks.contact_form.popup_title' | t }}</h1>
+            <div class="inquiry-blocks">
+              <div class="inquiry-block">
+                <svg class="selected-checkbox" width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8.5" cy="9" r="8.5" fill="#242424"/>
+                <path d="M5 9.77778L7.72222 12.5L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+    
+                <svg width="57" height="66" viewBox="0 0 57 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M55.5676 51.2714V41.7698C55.5676 41.1999 55.5676 40.9149 55.4564 40.6972C55.3586 40.5058 55.2026 40.3501 55.0107 40.2525C54.7925 40.1416 54.5069 40.1416 53.9357 40.1416H3.39943C2.82823 40.1416 2.54263 40.1416 2.32446 40.2525C2.13255 40.3501 1.97652 40.5058 1.87874 40.6972C1.76758 40.9149 1.76758 41.1999 1.76758 41.7698V51.2714C1.76758 55.9018 1.76758 58.217 2.67078 59.9856C3.46525 61.5413 4.73296 62.8061 6.29221 63.5988C8.06484 64.4999 10.3853 64.4999 15.0263 64.4999H42.3088C46.9498 64.4999 49.2703 64.4999 51.0429 63.5988C52.6022 62.8061 53.8699 61.5413 54.6644 59.9856C55.5676 58.217 55.5676 55.9018 55.5676 51.2714Z" stroke="#737373" stroke-width="1.6"/>
+                <path d="M3.94617 5.9786C3.04297 7.73319 3.04297 10.0301 3.04297 14.6239V27.0178C3.04297 31.6116 3.04297 33.9085 3.94617 35.6631C4.74065 37.2065 6.00835 38.4613 7.5676 39.2477C9.34023 40.1417 11.6607 40.1417 16.3017 40.1417H41.0344C45.6754 40.1417 47.9959 40.1417 49.7686 39.2477C51.3278 38.4613 52.5955 37.2065 53.39 35.6631C54.2932 33.9085 54.2932 31.6116 54.2932 27.0179V27.0178V14.6239V14.6238C54.2932 10.0301 54.2932 7.73319 53.39 5.9786C52.5955 4.43522 51.3278 3.18041 49.7686 2.39401C47.9959 1.5 45.6754 1.5 41.0344 1.5L16.3017 1.5C11.6607 1.5 9.34023 1.5 7.5676 2.39401C6.00835 3.1804 4.74065 4.43521 3.94617 5.9786Z" stroke="#737373" stroke-width="1.6"/>
+                <path d="M18.5359 35.14H39.6632M14.3459 35.14V35.14C12.7909 35.14 12.0134 35.14 11.3757 34.9685C9.6535 34.5055 8.3083 33.1603 7.84529 31.4382C7.67383 30.8004 7.67383 30.0229 7.67383 28.468V25.413V16.227V14.5C7.67383 11.6997 7.67383 10.2996 8.2188 9.23005C8.69816 8.28924 9.46307 7.52433 10.4039 7.04497C11.4734 6.5 12.8736 6.5 15.6738 6.5L18.5359 6.5L38.7979 6.5L41.6599 6.5C44.4602 6.5 45.8603 6.5 46.9299 7.04497C47.8707 7.52434 48.6356 8.28924 49.115 9.23005C49.6599 10.2996 49.6599 11.6997 49.6599 14.5V16.227V25.413V29.709C49.6599 30.1092 49.6599 30.3093 49.6485 30.4783C49.4793 32.9731 47.493 34.9594 44.9982 35.1285C44.8293 35.14 44.6291 35.14 44.2289 35.14V35.14" stroke="#737373" stroke-width="1.6"/>
+                <path d="M40.524 39.7857C40.524 34.2329 36.5821 29.6011 31.3449 28.5376M17.5762 39.7857C17.5762 34.2329 21.5181 29.6011 26.7553 28.5376" stroke="#737373" stroke-width="1.6"/>
+                <path d="M13.8924 40C13.8834 39.7865 13.8789 39.572 13.8789 39.3563C13.8789 31.0004 20.6712 24.2266 29.05 24.2266C37.4288 24.2266 44.2211 31.0004 44.2211 39.3563C44.2211 39.572 44.2166 39.7865 44.2076 40" stroke="#737373" stroke-width="1.6"/>
+                <rect x="23.5684" y="18.6152" width="10.964" height="5.61134" rx="1.53036" stroke="#737373" stroke-width="1.6"/>
+                <rect x="26.7559" y="24.2266" width="4.58957" height="5.61134" rx="1.02024" stroke="#737373" stroke-width="1.6"/>
+                </svg>
+                <p class="subtitle">Order help</p>
+              </div>
+              <div class="inquiry-block">
+                <svg class="selected-checkbox" width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8.5" cy="9" r="8.5" fill="#242424"/>
+                <path d="M5 9.77778L7.72222 12.5L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+    
+                <svg width="60" height="64" viewBox="0 0 60 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M41.264 23.5241L30 29.0812M41.264 23.5241L12.5129 9.21878M41.264 23.5241V32.2973C41.264 33.7763 42.794 34.7509 44.121 34.1171L47.2154 32.6391C47.9134 32.3057 48.3584 31.5973 48.3584 30.8193V20.0241M41.264 23.5241L48.3584 20.0241M30 29.0812L1.24628 15.0741M30 29.0812V63M12.5129 9.21878L2.13578 14.226C1.44167 14.561 1 15.2673 1 16.0424V48.0161C1 48.7924 1.44311 49.4997 2.13893 49.8339L29.1389 62.8038C29.6836 63.0654 30.3164 63.0654 30.8611 62.8038L57.8611 49.8339C58.5569 49.4997 59 48.7924 59 48.0161V16.0424C59 15.2673 58.5583 14.561 57.8642 14.226L30.8642 1.19774C30.3178 0.934086 29.6822 0.934086 29.1358 1.19774L19.5451 5.82554M12.5129 9.21878L19.5451 5.82554M48.3584 20.0241L19.5451 5.82554M48.3584 20.0241L58.7004 14.9821M4.79614 39.184L13.073 43.0118M4.79614 43.6393L10.0858 46.1493" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+
+                <p class="subtitle">Delivers and returns</p>
+              </div>
+              
+              <div class="inquiry-block">
+               <svg class="selected-checkbox" width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8.5" cy="9" r="8.5" fill="#242424"/>
+                <path d="M5 9.77778L7.72222 12.5L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                  
+               <svg width="65" height="57" viewBox="0 0 65 57" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M63.332 17.8179L51.2127 2.27042C50.8337 1.78425 50.2517 1.5 49.6353 1.5H37.3591M63.332 17.8179H44.7473M63.332 17.8179L33.1124 55.5263C32.7121 56.0258 31.952 56.0258 31.5517 55.5263L1.33203 17.8179M37.3591 1.5L44.7473 17.8179M37.3591 1.5H27.305M44.7473 17.8179H19.9168M44.7473 17.8179L32.4389 56.1672M1.33203 17.8179L13.4514 2.27042C13.8304 1.78425 14.4123 1.5 15.0288 1.5H27.305M1.33203 17.8179H19.9168M27.305 1.5L19.9168 17.8179M19.9168 17.8179L32.2252 56.1672" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linejoin="round"/>
+                </svg>
+
+
+                <p class="subtitle">Product info</p>
+              </div>
+              
+              <div class="inquiry-block">
+                 <svg class="selected-checkbox" width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8.5" cy="9" r="8.5" fill="#242424"/>
+                <path d="M5 9.77778L7.72222 12.5L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                  
+                <svg width="65" height="64" viewBox="0 0 65 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M34.4621 21.4606C37.1925 21.4636 42.8701 23.99 43.3053 30.7104M31.1928 16.5834C37.0757 15.8536 48.6871 19.766 47.9681 34.13M30.546 35.4231C29.1784 33.9927 26.7378 31.3953 26.207 29.3952C26.0986 28.9866 26.32 28.5901 26.6426 28.3332C27.8142 27.3997 29.3234 25.6069 28.5395 23.5462C27.4406 20.6577 25.1686 18.7424 22.72 19.5147C20.2714 20.287 18.7579 22.1566 19.0319 24.5464C19.278 26.6928 21.0901 32.5883 27.1732 38.9511C33.2562 45.3138 38.8926 47.2092 40.9447 47.4666C43.2294 47.7532 45.0168 46.1701 45.7552 43.6089C46.4935 41.0478 44.6625 38.6713 41.9009 37.5219C39.9308 36.7019 38.2168 38.2806 37.3244 39.5061C37.0787 39.8434 36.6997 40.0751 36.309 39.9616C34.3968 39.4064 31.9136 36.8536 30.546 35.4231Z" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="32.666" cy="32" r="31" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p class="subtitle">Contact information</p>
+              </div>
+              
+              <div class="inquiry-block">
+                <svg class="selected-checkbox" width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8.5" cy="9" r="8.5" fill="#242424"/>
+                <path d="M5 9.77778L7.72222 12.5L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                  
+               <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M44.0919 34.5466L43.5179 33.9894V33.9894L44.0919 34.5466ZM32.8331 24.6068L32.2299 24.0814L32.2299 24.0814L32.8331 24.6068ZM45.894 30.9294L45.1038 30.8045V30.8045L45.894 30.9294ZM19.9081 34.5466L20.4821 33.9894H20.4821L19.9081 34.5466ZM31.1668 24.6068L31.7701 24.0814V24.0814L31.1668 24.6068ZM18.106 30.9294L17.3158 31.0542L18.106 30.9294ZM31.8255 25.363L31.2222 25.8885L31.8255 25.363ZM34.1523 44.7833L33.5784 44.226L34.1523 44.7833ZM29.8477 44.7833L29.2737 45.3406L29.8477 44.7833ZM34.1523 44.7833L34.7263 45.3406L44.6658 35.1039L44.0919 34.5466L43.5179 33.9894L33.5784 44.226L34.1523 44.7833ZM32.8331 24.6068L32.2299 24.0814L31.5712 24.8376L32.1745 25.363L32.7777 25.8885L33.4364 25.1323L32.8331 24.6068ZM45.894 30.9294L46.6842 31.0542C47.9993 22.7295 37.7963 17.6906 32.2299 24.0814L32.8331 24.6068L33.4364 25.1323C37.8758 20.0354 46.1854 23.958 45.1038 30.8045L45.894 30.9294ZM44.0919 34.5466L44.6658 35.1039C45.7379 33.9999 46.4426 32.5836 46.6842 31.0542L45.894 30.9294L45.1038 30.8045C44.9132 32.0111 44.3578 33.1244 43.5179 33.9894L44.0919 34.5466ZM29.8477 44.7833L30.4216 44.226L20.4821 33.9894L19.9081 34.5466L19.3342 35.1039L29.2737 45.3406L29.8477 44.7833ZM31.1668 24.6068L30.5636 25.1323L31.2222 25.8885L31.8255 25.363L32.4288 24.8376L31.7701 24.0814L31.1668 24.6068ZM18.106 30.9294L18.8962 30.8045C17.8146 23.958 26.1242 20.0354 30.5636 25.1323L31.1668 24.6068L31.7701 24.0814C26.2037 17.6906 16.0007 22.7295 17.3158 31.0542L18.106 30.9294ZM19.9081 34.5466L20.4821 33.9894C19.6422 33.1244 19.0868 32.0111 18.8962 30.8045L18.106 30.9294L17.3158 31.0542C17.5574 32.5836 18.2621 33.9999 19.3342 35.1039L19.9081 34.5466ZM32.1745 25.363L31.5712 24.8376C31.7979 24.5774 32.2021 24.5774 32.4288 24.8376L31.8255 25.363L31.2222 25.8885C31.6333 26.3605 32.3667 26.3605 32.7777 25.8885L32.1745 25.363ZM34.1523 44.7833L33.5784 44.226C32.7143 45.116 31.2857 45.116 30.4216 44.226L29.8477 44.7833L29.2737 45.3406C30.7662 46.8778 33.2338 46.8778 34.7263 45.3406L34.1523 44.7833Z" fill="#161616" fill-opacity="0.6"/>
+                <circle cx="32" cy="32" r="31" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p class="subtitle">Collaboration</p>
+              </div>
+              
+              <div class="inquiry-block">
+                 <svg class="selected-checkbox" width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8.5" cy="9" r="8.5" fill="#242424"/>
+                <path d="M5 9.77778L7.72222 12.5L11 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                  
+                 <svg width="65" height="64" viewBox="0 0 65 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1.33203" y="1" width="62" height="62" rx="31" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="31.832" cy="45.064" r="1.5" fill="#161616" fill-opacity="0.6"/>
+                <path d="M24.832 23.6829C25.0433 22.1212 26.5084 17.436 32.3687 17.436C39.201 17.436 40.4048 23.3486 39.6236 26.5224C38.3519 31.6892 33.3946 31.3022 32.3251 36.0551C32.0568 37.2477 32.0099 38.1372 31.9714 39.5" stroke="#161616" stroke-opacity="0.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p class="subtitle">Other help</p>
+              </div>
+            </div>
+
+            <button
+             id="ApplyInquiryButton"
+             on:click="/closeDialog"
+             disabled
+             type="button"
+             class="button btn-primary"
+            aria-label="{{ 'accessibility.close_dialog' | t }}"
+            >
+              {{ 'blocks.contact_form.btn_popup_apply' | t }}
+            </button>
+          </div>
+          <button
+            ref="closeButton"
+            on:click="/closeDialog"
+             type="button"
+            class="button popup-link__close"
+            aria-label="{{ 'accessibility.close_dialog' | t }}"
+          >
+            {{- 'icon-close.svg' | inline_asset_content -}}
+          </button>
+        </dialog>
+      </dialog-component>
+     </div>
+
+      <input
+        type="text"
+        id="ContactForm-inquiry"
+        class="contact-form__input hide hidden"
+        autocomplete="inquiry"
+        name="contact[inquiry]"
+        spellcheck="false"
+        autocapitalize="off"
+        value=""
+        aria-required="true"
+        {% if form.errors contains 'email' %}
+          aria-invalid="true"
+          aria-describedby="ContactForm-inquiry-error"
+        {% endif %}
+        placeholder="{{ 'blocks.contact_form.inquiry' | t }}"
+      >
+
+    <label
+      class="visually-hidden"
+      for="ContactForm-body"
+    >
+      {{- 'blocks.contact_form.comment' | t -}}
+    </label>
+    <textarea
+      rows="10"
+      id="ContactForm-body"
+      class="contact-form__input contact-form__input--textarea"
+      name="contact[body]"
+      placeholder="{{ 'blocks.contact_form.comment' | t }}"
+    >
+      {{- form.body -}}
+    </textarea>
+
+    {{ submit_button }}
+
+    {%- if form.errors -%}
+      <div
+        class="contact-form__error"
+        tabindex="-1"
+        autofocus
+      >
+        {{- 'icon-error.svg' | inline_asset_content -}}
+
+        {{- form.errors.translated_fields.email | capitalize }}
+        {{ form.errors.messages.email -}}
+      </div>
+    {%- endif -%}
+    
+    {%- if form.posted_successfully? -%}
+      <div
+        class="contact-form__success toast"
+        tabindex="-1"
+        autofocus
+      >
+        <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.7" y="1.2" width="18.6" height="18.6" rx="9.3" stroke="#7FAC66" stroke-width="1.4"/>
+        <path d="M9.76981 5.68601C9.82307 5.438 10.1769 5.438 10.2302 5.68601L11.0085 9.31069C11.028 9.40126 11.0987 9.47201 11.1893 9.49145L14.814 10.2698C15.062 10.3231 15.062 10.6769 14.814 10.7302L11.1893 11.5085C11.0987 11.528 11.028 11.5987 11.0085 11.6893L10.2302 15.314C10.1769 15.562 9.82307 15.562 9.76981 15.314L8.99145 11.6893C8.97201 11.5987 8.90126 11.528 8.81069 11.5085L5.18601 10.7302C4.938 10.6769 4.938 10.3231 5.18601 10.2698L8.81069 9.49145C8.90126 9.47201 8.97201 9.40126 8.99145 9.31069L9.76981 5.68601Z" fill="#7FAC66"/>
+        </svg>
+
+        {{- 'blocks.contact_form.post_success' | t -}}
+      </div>
+    {%- endif -%}
+  {%- endform -%}
+  </div>
+  <div class="image-wrapper">
+  
+    <img src="{{ settings.image_banner | img_url: 'master' }}" />
+  </div>
+</div>
+</div>

@@ -1,0 +1,143 @@
+{% doc %}
+  @prompt
+    I need to add breadcrumbs for the blog page.
+    Here is my code for breadcrumbs on products:
+    {% if section.settings.show_breadcrumbs %}
+    <div class="product_breadcrumbs">
+    <a href="/">Home</a>
+    <p>/</p>
+    {% if product.collections.first.title != blank %}
+    <a href="{{ product.collections.first.url }}">{{ product.collections.first.title }}</a>
+    <p>/</p>
+    {% endif %}
+    <p>{{ product.title }}</p>
+    </div>
+    {% endif %}
+    
+    You don't need to write the collection name itself at the end. It should just be a "/" symbol at the end.
+    And here are the styles for breadcrumbs:
+    .product_breadcrumbs{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    } 
+    
+    .product_breadcrumbs a, .product_breadcrumbs p{ 
+    color: #16161659; 
+    font-size: 14px; 
+    font-weight: 500; 
+    text-transform: uppercase; 
+    margin: 0; 
+    
+    @media screen and (width < 750px) { 
+    font-size: 12px; 
+    } 
+    } 
+    
+    .product_breadcrumbs p{ 
+    cursor: default; 
+    } 
+    
+    .product_breadcrumbs a{ 
+    cursor: pointer; 
+    
+    &:hover { 
+    color: #161616; 
+    } 
+    }, The structure should be as follows:
+    Home / Blog, A blog should not be clickable and there should be nothing left of it.
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+<div class="blog-breadcrumbs-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {% if block.settings.show_breadcrumbs %}
+    <div class="blog_breadcrumbs">
+      <a href="/">Home</a>
+      <p>/</p>
+      <p>Blog</p>
+    </div>
+  {% endif %}
+</div>
+
+{% style %}
+  .blog_breadcrumbs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: {{ block.settings.margin_top }}px;
+    margin-bottom: {{ block.settings.margin_bottom }}px;
+  }
+
+  .blog_breadcrumbs a, .blog_breadcrumbs p {
+    color: #16161659;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .blog_breadcrumbs p {
+    cursor: default;
+  }
+
+  .blog_breadcrumbs a {
+    cursor: pointer;
+  }
+
+  .blog_breadcrumbs a:hover {
+    color: #161616;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog_breadcrumbs a, .blog_breadcrumbs p {
+      font-size: 12px;
+    }
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Blog Breadcrumbs",
+  "tag": null,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumbs",
+      "label": "Show breadcrumbs",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top margin",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom margin",
+      "default": 20
+    }
+  ],
+  "presets": [
+    {
+      "name": "Blog Breadcrumbs"
+    }
+  ]
+}
+{% endschema %}
